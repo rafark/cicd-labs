@@ -1,4 +1,4 @@
-name: Check PHP file syntax
+name: CI Smoke Tests
 
 on: 
   pull_request:
@@ -12,12 +12,31 @@ concurrency:
 
 jobs:
     # ==============================================================================
-    #  First make sure the changed php files are valid eg: have no shallow syntax errors
+    #  Set if we have changed PHP files
+    # ==============================================================================
+    set-php-has-changes:
+      name: Check for PHP file changes
+      runs-on: ubuntu-latest
+      outputs:
+        has_php: ${{ steps.php-changes.outputs.php }}
+      steps:
+        - uses: actions/checkout@v4
+        - uses: dorny/paths-filter@v3
+          id: php-changes
+          with:
+            filters: |
+              php:
+                - '**/*.php'
+    # ==============================================================================
+    #  Then only check for syntax errors on changed PHP files
     # ==============================================================================    
     check-php-changed-files:
         name: Ensure changed PHP files are valid across all supported PHP versions.
+        needs: set-php-has-changes
+        if: needs.set-php-has-changes.outputs.has_php == 'true'
         runs-on: ubuntu-latest
         strategy:
+            fail-fast: true
             matrix:
                 php-version: [7.4, 8.0, 8.1, 8.2, 8.3, 8.4]
         steps:
@@ -48,3 +67,12 @@ jobs:
                 for file in ${{ steps.changed-php-files.outputs.all_changed_files }}; do
                     php -l "$file"
                 done
+    # ==============================================================================
+    #  Now for the real deal...
+    # ==============================================================================
+    smoke-tests:
+      runs-on: ubuntu-latest
+      needs: check-php-changed-files
+      if: always() && (needs.check-php-changed-files.result == 'success' || needs.check-php-changed-files.result == 'skipped')
+      steps:
+        - run: echo "ran the smoking hot tests!"
