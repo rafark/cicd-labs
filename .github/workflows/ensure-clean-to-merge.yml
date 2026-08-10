@@ -14,6 +14,12 @@ jobs:
             #  setup...
             # ------------------------------------------------
             - uses: actions/checkout@v6
+
+            - name: Setup PHP Action
+              uses: shivammathur/setup-php@2.37.2
+              with: 
+                php-version: 7.4
+
             # --------  set changed files --------
             - name: Set changed PHP files
               id: changed-php-files
@@ -21,5 +27,12 @@ jobs:
               with: 
                 files: |
                     **.php
-            # --------  lets see the changed files --------
-            - run: echo "${{ steps.changed-php-files.outputs.all_changed_files }}"
+            # ------------------------------------------------
+            #  Run the actual lint checks!
+            # ------------------------------------------------
+            #- run: echo "${{ steps.changed-php-files.outputs.all_changed_files }}"
+            - name: Check changed files syntax
+              run: |
+                for file in "${{ steps.changed-php-files.outputs.all_changed_files }}"; do
+                    php -l "$file"
+                done
