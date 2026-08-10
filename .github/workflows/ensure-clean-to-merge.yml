@@ -7,8 +7,11 @@ jobs:
     #  First make sure the changed php files are valid eg: have no shallow syntax errors
     # ==============================================================================    
     check-php-changed-files:
-        name: Ensure changed PHP files are valid
+        name: Ensure changed PHP files are valid across all supported PHP versions.
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                php-version: [7.4, 8.0, 8.1, 8.2, 8.3, 8.4]
         steps:
             # ------------------------------------------------
             #  setup...
@@ -18,7 +21,7 @@ jobs:
             - name: Setup PHP Action
               uses: shivammathur/setup-php@2.37.2
               with: 
-                php-version: 7.4
+                php-version: ${{ matrix.php-version }}
 
             # --------  set changed files --------
             - name: Set changed PHP files
