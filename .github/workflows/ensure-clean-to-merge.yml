@@ -33,6 +33,6 @@ jobs:
             #- run: echo "${{ steps.changed-php-files.outputs.all_changed_files }}"
             - name: Check changed files syntax
               run: |
-                for file in "${{ steps.changed-php-files.outputs.all_changed_files }}"; do
+                for file in ${{ steps.changed-php-files.outputs.all_changed_files }}; do
                     php -l "$file"
                 done
