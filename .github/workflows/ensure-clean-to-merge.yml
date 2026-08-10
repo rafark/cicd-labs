@@ -2,6 +2,10 @@ name: CI Checks
 
 on: pull_request
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
     # ==============================================================================
     #  First make sure the changed php files are valid eg: have no shallow syntax errors
@@ -22,6 +26,7 @@ jobs:
               uses: shivammathur/setup-php@2.37.2
               with: 
                 php-version: ${{ matrix.php-version }}
+                coverage: none
 
             # --------  set changed files --------
             - name: Set changed PHP files
