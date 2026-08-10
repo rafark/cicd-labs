@@ -3,8 +3,23 @@ name: CI Checks
 on: pull_request
 
 jobs:
+    # ==============================================================================
+    #  First make sure the changed php files are valid eg: have no shallow syntax errors
+    # ==============================================================================    
     check-php-changed-files:
+        name: Ensure changed PHP files are valid
         runs-on: ubuntu-latest
         steps:
+            # ------------------------------------------------
+            #  setup...
+            # ------------------------------------------------
             - uses: actions/checkout@v6
-            - run: echo "hello from the workflow!"
+            # --------  set changed files --------
+            - name: Set changed PHP files
+              id: changed-php-files
+              uses: tj-actions/changed-files@v47.0.6
+              with: 
+                files: |
+                    **.php
+            # --------  lets see the changed files --------
+            - run: echo "${{ steps.changed-php-files.outputs.all_changed_files }}"
