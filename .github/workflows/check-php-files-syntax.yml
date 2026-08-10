@@ -1,6 +1,14 @@
-name: CI Checks
+name: Check PHP file syntax
 
-on: pull_request
+on: 
+  pull_request:
+    paths: 
+      - '**.php'
+  
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
     # ==============================================================================
@@ -22,6 +30,7 @@ jobs:
               uses: shivammathur/setup-php@2.37.2
               with: 
                 php-version: ${{ matrix.php-version }}
+                coverage: none
 
             # --------  set changed files --------
             - name: Set changed PHP files
