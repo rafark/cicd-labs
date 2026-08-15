@@ -100,7 +100,7 @@ jobs:
         
         # --------  Install versions finder --------
         - name: Install versions-finder
-          run: curl -L https://raw.githubusercontent.com/neblabs/versions-finder/main/install.sh | sh
+          run: curl -L https://raw.githubusercontent.com/neblabs/versions-finder/main/install.sh | bash
           
         # ------------------------------------------------
         #  create base initial build, lacks some transformations and js compilation
