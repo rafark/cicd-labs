@@ -5,6 +5,10 @@ on:
     paths-ignore:
       - '.github/**'
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -37,7 +41,8 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                php-version: [7.4, 8.0, 8.1, 8.2, 8.3, 8.4]
+                # php-version: [7.4, 8.0, 8.1, 8.2, 8.3, 8.4]
+                php-version: [7.4]
         steps:
             # ------------------------------------------------
             #  setup...
@@ -96,11 +101,14 @@ jobs:
         - name: Set WP version to use
           id: wp-version
           run: |
-            echo "wpVersion='$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')'" >> $GITHUB_OUTPUT
+            echo "wpVersion=$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')" >> $GITHUB_OUTPUT
         
         # --------  Install versions finder --------
         - name: Install versions-finder
-          run: curl -L https://raw.githubusercontent.com/neblabs/versions-finder/main/install.sh | bash
+          run: |
+            curl -L https://raw.githubusercontent.com/neblabs/versions-finder/main/install.sh | bash
+            # fails if not found
+            command -v versions-finder
           
         # ------------------------------------------------
         #  create base initial build, lacks some transformations and js compilation
@@ -118,11 +126,11 @@ jobs:
         # ------------------------------------------------
         - name: Inject headers data
           run: |
-            curl -L https://raw.githubusercontent.com/neblabs/header-injector/main/bin/install.sh | sh
+            curl -L https://raw.githubusercontent.com/neblabs/header-injector/main/bin/install.sh | bash
             # fails if not found
-            which header-injector
+            command -v header-injector
 
-            header-injector inject . '"${{ steps.edp-build.outputs.buildDir }}"' '"${{ steps.wp-version.outputs.wpVersion }}"' --git-source .
+            header-injector inject . "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .
         # ------------------------------------------------
         #  Save it to a new tmp branch for testing 
         # ------------------------------------------------
