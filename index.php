@@ -21,5 +21,3 @@ use CouponsPlus\Original\Installation;
  * this is another comment: should be ignored!
  */
 echo "this is a plugin test!";
-
-echo "we have added a new file!"
