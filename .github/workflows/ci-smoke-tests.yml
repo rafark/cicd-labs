@@ -61,7 +61,7 @@ jobs:
             - name: Check changed files syntax
               run: |
                 for file in ${{ steps.changed-php-files.outputs.all_changed_files }}; do
-                    php -l "$file"
+                    [ -f "$file" ] && php -l "$file"
                 done
     # ==============================================================================
     #  Now lets build the initial artifact, without compiling js 
