@@ -11,7 +11,7 @@ while [[ $# -gt 0 ]]; do
             target=$2
             shift 2
             # shellcheck disable=SC2210
-            ! [[ -d "$target" ]] && echo "target: $target not a dir" 1>2 && exit 1
+            ! [[ -d "$target" ]] && echo "target: $target not a dir" 1>&2 && exit 1
         ;;
         --silent)
             # this mock edp is silent by default but lets parse it to adhere to the spec/cli
@@ -20,6 +20,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+mkdir -p "$target"
 # put some random ahh file for the test
 (cd "$target" && touch index.php )
 

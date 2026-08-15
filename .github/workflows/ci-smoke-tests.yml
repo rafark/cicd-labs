@@ -79,7 +79,7 @@ jobs:
             chmod u+x ./edp
             
             buildDir=$(./edp build --target $RUNNER_TEMP --silent)
-            echo "buildDir='$buildDir'" >> $GITHUB_OUTPUT
+            echo "buildDir=$buildDir" >> $GITHUB_OUTPUT
         - name: Upload uncompressed build folder as artifact for manual testing
           uses: actions/upload-artifact@v4
           with:
