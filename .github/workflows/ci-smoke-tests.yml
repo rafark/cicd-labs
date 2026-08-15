@@ -91,11 +91,17 @@ jobs:
           with: 
             php-version: 8.4
             coverage: none
+        
         # --------  set wp version to use (latest) --------
         - name: Set WP version to use
           id: wp-version
           run: |
             echo "wpVersion='$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')'" >> $GITHUB_OUTPUT
+        
+        # --------  Install versions finder --------
+        - name: Install versions-finder
+          run: curl -L https://raw.githubusercontent.com/neblabs/versions-finder/main/install.sh | sh
+          
         # ------------------------------------------------
         #  create base initial build, lacks some transformations and js compilation
         # ------------------------------------------------
