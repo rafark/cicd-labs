@@ -161,7 +161,7 @@ jobs:
               latest=--latest
             fi
 
-            wp-changelog-injector --readme "${{ steps.edp-build.outputs.buildDir }}"/readme.md --changelog "${{ steps.edp-build.outputs.buildDir }}"/changelog.md "$latest"
+            bash -x wp-changelog-injector --readme "${{ steps.edp-build.outputs.buildDir }}"/readme.md --changelog "${{ steps.edp-build.outputs.buildDir }}"/changelog.md "$latest"
             
 
         # ------------------------------------------------
