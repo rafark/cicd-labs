@@ -5,6 +5,10 @@ on:
     paths-ignore:
       - '.github/**'
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -100,7 +104,10 @@ jobs:
         
         # --------  Install versions finder --------
         - name: Install versions-finder
-          run: curl -L https://raw.githubusercontent.com/neblabs/versions-finder/main/install.sh | bash
+          run: |
+            curl -L https://raw.githubusercontent.com/neblabs/versions-finder/main/install.sh | bash
+            # fails if not found
+            command -v header-injector
           
         # ------------------------------------------------
         #  create base initial build, lacks some transformations and js compilation
@@ -118,9 +125,9 @@ jobs:
         # ------------------------------------------------
         - name: Inject headers data
           run: |
-            curl -L https://raw.githubusercontent.com/neblabs/header-injector/main/bin/install.sh | sh
+            curl -L https://raw.githubusercontent.com/neblabs/header-injector/main/bin/install.sh | bash
             # fails if not found
-            which header-injector
+            command -v header-injector
 
             header-injector inject . '"${{ steps.edp-build.outputs.buildDir }}"' '"${{ steps.wp-version.outputs.wpVersion }}"' --git-source .
         # ------------------------------------------------
