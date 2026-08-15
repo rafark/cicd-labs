@@ -20,4 +20,4 @@ use CouponsPlus\Original\Installation;
 /*
  * this is another comment: should be ignored!
  */
-echo "this is a plugin test!";
+echo "this is a plugin test!"; // new
