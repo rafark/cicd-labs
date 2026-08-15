@@ -101,7 +101,7 @@ jobs:
         - name: Set WP version to use
           id: wp-version
           run: |
-            echo "wpVersion='$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')'" >> $GITHUB_OUTPUT
+            echo "wpVersion=$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')" >> $GITHUB_OUTPUT
         
         # --------  Install versions finder --------
         - name: Install versions-finder
