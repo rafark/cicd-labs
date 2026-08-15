@@ -85,6 +85,10 @@ jobs:
         #  Setup the env...
         # ==============================================================================
         - uses: actions/checkout@v4
+
+        # --------  fetch all them tags --------
+        - name: Fetch Git Tags
+          run: git fetch --tags
         
         # --------  add the local bin to path --------
         - name: Add ~/.local/bin to the path PATH, used by some deps bellow
@@ -130,7 +134,13 @@ jobs:
             # fails if not found
             command -v header-injector
 
-            header-injector inject . "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .
+            # inject it
+            res=$(header-injector inject . "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .)
+
+            { read -r phpFile; read -r readmeFile; } <<< "$res"
+
+            #validate it
+            header-injector validate "$phpFile" "$readmeFile" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .
         # ------------------------------------------------
         #  Save it to a new tmp branch for testing 
         # ------------------------------------------------
