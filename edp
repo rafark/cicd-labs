@@ -19,9 +19,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 mkdir -p "$target"
-# put some random ahh file for the test
-(cd "$target" && touch index.php )
 
+# just copy the files over; this is only a mock command and you're responsible for providing your own edp.
+cp ./* "$target"
 # then echo the dir
 
 echo "$target"
