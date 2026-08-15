@@ -130,7 +130,7 @@ jobs:
             # fails if not found
             command -v header-injector
 
-            header-injector inject . '"${{ steps.edp-build.outputs.buildDir }}"' '"${{ steps.wp-version.outputs.wpVersion }}"' --git-source .
+            header-injector inject . "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .
         # ------------------------------------------------
         #  Save it to a new tmp branch for testing 
         # ------------------------------------------------
