@@ -142,6 +142,29 @@ jobs:
             #validate it
             header-injector validate "$phpFile" "$readmeFile" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .
         # ------------------------------------------------
+        #  Now for the changelog
+        # ------------------------------------------------
+        # --------  lets setup git cliff here so that if something failed earlier we are not wasting extra time. --------
+        - name: Set up git-cliff
+          uses: kenji-miyake/setup-git-cliff@v1
+
+        - name: Inject changelog data
+          run: |
+            curl -L https://raw.githubusercontent.com/neblabs/wp-changelog-injector/main/install.sh | bash
+            
+            # fails if not found
+            command -v wp-changelog-injector
+
+            # on pull request get the changelog from the latest tag instead of the previous which is for on tags push.
+            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              # this flag is passed to wp-changelog-injector
+              latest=--latest
+            fi
+
+            wp-changelog-injector --readme "${{ steps.edp-build.outputs.buildDir }}"/readme.md --changelog "${{ steps.edp-build.outputs.buildDir }}"/changelog.md "$latest"
+            
+
+        # ------------------------------------------------
         #  Save it to a new tmp branch for testing 
         # ------------------------------------------------
         - name: Deploy build output to dynamic preview branch
