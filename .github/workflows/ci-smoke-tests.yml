@@ -72,6 +72,9 @@ jobs:
       if: always() && (needs.check-php-changed-files.result == 'success' || needs.check-php-changed-files.result == 'skipped')
       steps:
         - uses: actions/checkout@v4
+        # ------------------------------------------------
+        #  create base initial build, lacks some transformations and js compilation
+        # ------------------------------------------------
         - name: Run the edp builder
           id: edp-build
           run: |
@@ -80,8 +83,11 @@ jobs:
             
             buildDir=$(./edp build --target $RUNNER_TEMP --silent)
             echo "buildDir=$buildDir" >> $GITHUB_OUTPUT
-        - name: Upload uncompressed build folder as artifact for manual testing
-          uses: actions/upload-artifact@v4
+        # ------------------------------------------------
+        #  Save it to a new tmp branch for testing
+        # ------------------------------------------------
+        - name: Deploy build output to dynamic preview branch
+          uses: JamesIves/github-pages-deploy-action@v4
           with:
-            name: build-artifact-manual-check
-            path: ${{ steps.edp-build.outputs.buildDir }}
+            folder: ${{ steps.edp-build.outputs.buildDir }}
+            branch: build-preview-pr-${{ github.event.number }}
