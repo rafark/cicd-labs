@@ -64,11 +64,23 @@ jobs:
                     php -l "$file"
                 done
     # ==============================================================================
-    #  Now for the real deal...
+    #  Now lets build the initial artifact, without compiling js 
     # ==============================================================================
-    smoke-tests:
+    initial-build:
       runs-on: ubuntu-latest
       needs: check-php-changed-files
       if: always() && (needs.check-php-changed-files.result == 'success' || needs.check-php-changed-files.result == 'skipped')
       steps:
-        - run: echo "ran the smoking hot tests!"
+        - name: Run the edp builder
+          id: edp-build
+          run: |
+            # ion know if is exec so lets ensure it is
+            chmod u+x ./edp
+            
+            buildDir=$(./edp build --target $RUNNER_TEMP --silent)
+            echo "buildDir='$buildDir'" >> $GITHUB_ENV
+        - name: Upload uncompressed build folder as artifact for manual testing
+          uses: actions/upload-artifact@v4
+          with:
+            name: build-artifact-manual-check
+            path: ${{ steps.edp-build.outputs.buildDir }}
