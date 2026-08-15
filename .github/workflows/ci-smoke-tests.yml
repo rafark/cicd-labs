@@ -83,7 +83,7 @@ jobs:
             # ion know if is exec so lets ensure it is
             chmod u+x ./edp
             
-            buildDir=$(./edp build --target $RUNNER_TEMP --silent)
+            buildDir=$(./edp build --target $RUNNER_TEMP/build --silent)
             echo "buildDir=$buildDir" >> $GITHUB_OUTPUT
         # ------------------------------------------------
         #  Save it to a new tmp branch for testing
