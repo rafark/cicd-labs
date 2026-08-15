@@ -19,9 +19,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 mkdir -p "$target"
-# put some random ahh file for the test
-(cd "$target" && touch index.php )
 
-# then echo the dir
+# just move everything to the target; this is a mock script the real edp your responsible for providing it.
+
+cp ./* "$target"
 
 echo "$target"

@@ -1,2 +1,15 @@
-# ci-template
-A template for github actions used in some of our plugins
+=== Coupons+ ===
+Contributors: neblabs
+Tags: woocommerce, coupons, bogo, discounts, pricing
+Requires PHP: unknown
+License: GPLv3
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
+
+Next-generation coupon offers builder for WooCommerce. Create advanced BOGO coupons, brand discounts, quantity-based rules, and auto-applied offers!
+
+== Description ==
+
+Coupons+ supercharges your store by giving you the power to create highly effective, targeted discounts with a nice visual builder.
+
+= 1.0.0 =
+* Initial public release.
