@@ -73,7 +73,26 @@ jobs:
       needs: check-php-changed-files
       if: always() && (needs.check-php-changed-files.result == 'success' || needs.check-php-changed-files.result == 'skipped')
       steps:
+        # ==============================================================================
+        #  Setup the env...
+        # ==============================================================================
         - uses: actions/checkout@v4
+        
+        # --------  add the local bin to path --------
+        - name: Add ~/.local/bin to the path PATH, used by some deps bellow
+          run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+        
+        # --------  install php 8.4 --------
+        - name: Setup PHP Action
+          uses: shivammathur/setup-php@2.37.2
+          with: 
+            php-version: 8.4
+            coverage: none
+        # --------  set wp version to use (latest) --------
+        - name: Set WP version to use
+          id: wp-version
+          run: |
+            echo "wpVersion='$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')'" >> $GITHUB_OUTPUT
         # ------------------------------------------------
         #  create base initial build, lacks some transformations and js compilation
         # ------------------------------------------------
@@ -85,6 +104,16 @@ jobs:
             
             buildDir=$(./edp build --target $RUNNER_TEMP/build --silent)
             echo "buildDir=$buildDir" >> $GITHUB_OUTPUT
+        # ------------------------------------------------
+        #  Inject the headers into the build
+        # ------------------------------------------------
+        - name: Inject headers data
+          run: |
+            curl -L https://raw.githubusercontent.com/neblabs/header-injector/main/bin/install.sh | sh
+            # fails if not found
+            which header-injector
+
+            header-injector inject . '"${{ steps.edp-build.outputs.buildDir }}"' '"${{ steps.wp-version.outputs.wpVersion }}"' --git-source .
         # ------------------------------------------------
         #  Save it to a new tmp branch for testing
         # ------------------------------------------------
