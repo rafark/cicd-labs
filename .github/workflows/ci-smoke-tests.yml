@@ -41,7 +41,8 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                php-version: [7.4, 8.0, 8.1, 8.2, 8.3, 8.4]
+                # php-version: [7.4, 8.0, 8.1, 8.2, 8.3, 8.4]
+                php-version: [7.4]
         steps:
             # ------------------------------------------------
             #  setup...
@@ -107,7 +108,7 @@ jobs:
           run: |
             curl -L https://raw.githubusercontent.com/neblabs/versions-finder/main/install.sh | bash
             # fails if not found
-            command -v header-injector
+            command -v versions-finder
           
         # ------------------------------------------------
         #  create base initial build, lacks some transformations and js compilation
