@@ -22,6 +22,7 @@ mkdir -p "$target"
 
 # just copy the files over; this is only a mock command and you're responsible for providing your own edp.
 cp ./* "$target"
+
 # then echo the dir
 
 echo "$target"
