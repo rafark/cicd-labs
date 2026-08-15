@@ -6,7 +6,7 @@ use CouponsPlus\Original\Installation;
  * Plugin Name: Coupons+
  * Plugin URI: couponsplus.app
  * Description: Next-generation coupon offers engine for WooCommerce. Create advanced deals, smart BOGO offers, and more!
- * Version: dev
+ * Version: 1.0.0
  * Author: neblabs
  * Author URI: neblabs.com
  * Text Domain: coupons-plus-for-woocommerce
@@ -20,5 +20,5 @@ use CouponsPlus\Original\Installation;
 /*
  * this is another comment: should be ignored!
  */
-// modified! again! and again! and once again!
+// modified! again! and again! and once again! and again!
 echo "this is a plugin test!";
