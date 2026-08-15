@@ -7,11 +7,11 @@ License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Next-generation coupon offers builder for WooCommerce. Create advanced BOGO coupons, brand discounts, quantity-based rules, and auto-applied offers!
 
-we have added a new file!
-
 == Description ==
 
 Coupons+ supercharges your store by giving you the power to create highly effective, targeted discounts with a nice visual builder.
+
+== Changelog ==
 
 = 1.0.0 =
 * Initial public release.
