@@ -85,6 +85,8 @@ jobs:
         #  Setup the env...
         # ==============================================================================
         - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
 
         # --------  fetch all them tags --------
         - name: Fetch Git Tags
