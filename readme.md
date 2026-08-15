@@ -10,11 +10,24 @@ Tested up to: 7.0.4
 
 Next-generation coupon offers builder for WooCommerce. Create advanced BOGO coupons, brand discounts, quantity-based rules, and auto-applied offers!
 
-we have added a new file!
-
 == Description ==
 
 Coupons+ supercharges your store by giving you the power to create highly effective, targeted discounts with a nice visual builder.
+
+== Changelog ==
+
+= 1.1.0-beta-1 =
+**Bug Fixes**
+* Removed extra single quotes
+* Added readme with expected struct
+* New file now has content
+* The doc data has moved to the readme file
+**Documentation**
+* Updated main index file with docs
+**Features**
+* Added changelog injector
+* Added changelog injector
+* Added a new file: new-file.php!
 
 = 1.0.0 =
 * Initial public release.

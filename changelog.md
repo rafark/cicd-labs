@@ -9,6 +9,7 @@
 ### 🐛 Bug Fixes
 
 - Removed extra single quotes
+- Added readme with expected struct
 - New file now has content
 - The doc data has moved to the readme file
 
