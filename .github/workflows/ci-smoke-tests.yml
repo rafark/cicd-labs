@@ -118,7 +118,7 @@ jobs:
         # ------------------------------------------------
         - name: Inject headers data
           run: |
-            curl -L https://raw.githubusercontent.com/neblabs/header-injector/main/bin/install.sh | sh
+            curl -L https://raw.githubusercontent.com/neblabs/header-injector/main/bin/install.sh | bash
             # fails if not found
             which header-injector
 
