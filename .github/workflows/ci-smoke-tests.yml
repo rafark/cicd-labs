@@ -1,6 +1,9 @@
 name: CI Smoke Tests
 
-on: pull_request
+on: 
+  pull_request:
+    paths-ignore:
+      - '.github/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
