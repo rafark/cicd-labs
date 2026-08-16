@@ -21,7 +21,7 @@ done
 mkdir -p "$target"
 
 # just copy the files over; this is only a mock command and you're responsible for providing your own edp.
-for file in ./*; do
+for file in *; do
     if ! [[ "$file" == 'index.php' ]]; then
         cp "$file" "$target"
     fi
