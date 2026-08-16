@@ -11,7 +11,5 @@ Next-generation coupon offers builder for WooCommerce. Create advanced BOGO coup
 
 Coupons+ supercharges your store by giving you the power to create highly effective, targeted discounts with a nice visual builder.
 
-== Changelog ==
-
 = 1.0.0 =
 * Initial public release.
