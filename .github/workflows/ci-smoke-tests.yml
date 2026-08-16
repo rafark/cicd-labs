@@ -172,7 +172,7 @@ jobs:
           uses: JamesIves/github-pages-deploy-action@v4
           with:
             folder: ${{ steps.edp-build.outputs.buildDir }}
-            branch: build-preview-pr-${{ github.event.number }}
+            branch: build-preview-pr-${{ github.event.number }}-${{ github.run_id }}
         # ------------------------------------------------
         #  Now the plugin check tests
         # ------------------------------------------------
