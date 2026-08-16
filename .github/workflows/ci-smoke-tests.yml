@@ -171,8 +171,8 @@ jobs:
         - name: Deploy build output to dynamic preview branch
           uses: JamesIves/github-pages-deploy-action@v4
           with:
-            folder: .
-            branch: run-preview-pr-${{ github.event.number }}-${{ github.run_id }}
+            folder: ${{ steps.edp-build.outputs.buildDir }}
+            branch: build-preview-pr-${{ github.event.number }}-${{ github.run_id }}
         # ------------------------------------------------
         #  Now the plugin check tests
         # ------------------------------------------------
