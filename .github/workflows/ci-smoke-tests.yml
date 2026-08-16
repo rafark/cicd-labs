@@ -178,7 +178,7 @@ jobs:
         # ------------------------------------------------
         - name: Create wp-env config overrides
           run: |
-            cat << EOF > ${{ steps.edp-build.outputs.buildDir }}/.wp-env.override.json
+            cat << EOF > .wp-env.override.json
             {
               "core": "https://wordpress.org/wordpress-${{ steps.wp-version.outputs.wpVersion }}.zip",
               "config": {
