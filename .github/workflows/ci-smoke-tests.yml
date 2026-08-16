@@ -180,8 +180,8 @@ jobs:
           run: |
             cat << EOF > .wp-env.override.json
             {
-              "core": "https://wordpress.org/wordpress-${{ steps.wp-version.outputs.wpVersion }}.zip",
-              "config": {
+               "core": "https://wordpress.org/wordpress-${{ steps.wp-version.outputs.wpVersion }}.zip",
+               "config": {
                 "WP_DEBUG": true,
                 "WP_DEBUG_DISPLAY": false,
                 "WP_DEBUG_LOG": true
