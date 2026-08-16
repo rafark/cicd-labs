@@ -201,5 +201,6 @@ jobs:
           uses: wordpress/plugin-check-action@v1
           with:
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
+            slug: coupons-plus-for-woocommerce
             ignore-codes: |
               no_stable_tag
