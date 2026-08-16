@@ -165,7 +165,14 @@ jobs:
 
             bash -x wp-changelog-injector --readme "${{ steps.edp-build.outputs.buildDir }}"/readme.md --changelog "${{ steps.edp-build.outputs.buildDir }}"/changelog.md "$latest"
             
-
+        # ------------------------------------------------
+        #  Save it to a new tmp branch for testing 
+        # ------------------------------------------------
+        - name: Deploy build output to dynamic preview branch
+          uses: JamesIves/github-pages-deploy-action@v4
+          with:
+            folder: ${{ steps.edp-build.outputs.buildDir }}
+            branch: build-preview-pr-${{ github.event.number }}
         # ------------------------------------------------
         #  Now the plugin check tests
         # ------------------------------------------------
@@ -194,11 +201,3 @@ jobs:
           uses: wordpress/plugin-check-action@v1
           with:
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
-        # ------------------------------------------------
-        #  Save it to a new tmp branch for testing 
-        # ------------------------------------------------
-        - name: Deploy build output to dynamic preview branch
-          uses: JamesIves/github-pages-deploy-action@v4
-          with:
-            folder: ${{ steps.edp-build.outputs.buildDir }}
-            branch: build-preview-pr-${{ github.event.number }}
