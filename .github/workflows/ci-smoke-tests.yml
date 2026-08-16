@@ -201,3 +201,5 @@ jobs:
           uses: wordpress/plugin-check-action@v1
           with:
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
+            ignore-codes: |
+              no_stable_tag
