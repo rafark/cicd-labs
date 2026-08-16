@@ -186,8 +186,8 @@ jobs:
                 "wp-content/plugins/coupons-plus-for-woocommerce": "${{ steps.edp-build.outputs.buildDir }}"
               },
               "plugins": [
-                "woocommerce",
-                "plugin-check"
+                  "https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip",
+                  "https://downloads.wordpress.org/plugin/plugin-check.latest-stable.zip"
               ],
               "config": {
                 "WP_DEBUG": true,
