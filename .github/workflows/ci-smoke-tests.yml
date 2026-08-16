@@ -167,6 +167,13 @@ jobs:
             
 
         # ------------------------------------------------
+        #  Now the plugin check tests
+        # ------------------------------------------------
+        - name: WordPress Plugin Check
+          uses: WordPress/plugin-check-action@v1.1.9
+          with:
+            build-dir: ${{ steps.edp-build.outputs.buildDir }}
+        # ------------------------------------------------
         #  Save it to a new tmp branch for testing 
         # ------------------------------------------------
         - name: Deploy build output to dynamic preview branch
