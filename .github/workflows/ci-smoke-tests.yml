@@ -169,26 +169,11 @@ jobs:
         # ------------------------------------------------
         #  Now the plugin check tests
         # ------------------------------------------------
-        - name: Setup Node.js
-          uses: actions/setup-node@v4
-          with:
-            node-version: '20'
-
-        - name: Install wp-env globally
-          run: npm install -g @wordpress/env
-
-        - name: Create wp-env config
+        - name: Create wp-env config overrides
           run: |
-            cat << EOF > .wp-env.json
+            cat << EOF > .wp-env.override.json
             {
               "core": "https://wordpress.org/wordpress-${{ steps.wp-version.outputs.wpVersion }}.zip",
-              "mappings": {
-                "wp-content/plugins/coupons-plus-for-woocommerce": "${{ steps.edp-build.outputs.buildDir }}"
-              },
-              "plugins": [
-                  "https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip",
-                  "https://downloads.wordpress.org/plugin/plugin-check.latest-stable.zip"
-              ],
               "config": {
                 "WP_DEBUG": true,
                 "WP_DEBUG_DISPLAY": false,
@@ -205,12 +190,10 @@ jobs:
             restore-keys: |
               wp-env-${{ runner.os }}-wp-
 
-        - name: Start wp-env
-          run: wp-env start
-
-        - name: Run Plugin Check
-          run: |
-            wp-env run cli wp plugin check coupons-plus-for-woocommerce
+        - name: Run plugin check
+          uses: wordpress/plugin-check-action@v1
+          with:
+            build-dir: ${{ steps.edp-build.outputs.buildDir }}
         # ------------------------------------------------
         #  Save it to a new tmp branch for testing 
         # ------------------------------------------------
