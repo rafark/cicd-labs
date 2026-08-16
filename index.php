@@ -1,7 +1,4 @@
 <?php
-use CouponsPlus\Original\Events\Registrator\EventsRegistrator;
-use CouponsPlus\Original\Installation;
-
 /*
  * Plugin Name:       Coupons+
  * Plugin URI:        unknown
