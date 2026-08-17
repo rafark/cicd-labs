@@ -203,4 +203,4 @@ jobs:
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
             slug: coupons-plus-for-woocommerce
             ignore-codes: |
-              no_stable_tag
+              stable_tag_mismatch
