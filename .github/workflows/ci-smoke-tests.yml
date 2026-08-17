@@ -125,6 +125,13 @@ jobs:
         - name: Build js
           run: composer run build-scripts
         # ------------------------------------------------
+        #  Install the composer deps before running the builder
+        # ------------------------------------------------
+        - name: Install PHP Dependencies with Composer
+          uses: ramsey/composer-install@4.0.0
+          with:
+            composer-options: "--optimize-autoloader"
+        # ------------------------------------------------
         #  create base initial build, lacks some transformations
         # ------------------------------------------------
         - name: Run the edp builder
