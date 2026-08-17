@@ -117,7 +117,15 @@ jobs:
             command -v versions-finder
           
         # ------------------------------------------------
-        #  create base initial build, lacks some transformations and js compilation
+        #  lets build the js
+        # ------------------------------------------------
+        - name: Install js deps
+          run: composer run install-scripts-ci
+        
+        - name: Build js
+          run: composer run build-scripts
+        # ------------------------------------------------
+        #  create base initial build, lacks some transformations
         # ------------------------------------------------
         - name: Run the edp builder
           id: edp-build
