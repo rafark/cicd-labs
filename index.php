@@ -10,7 +10,6 @@ use CouponsPlus\Original\Installation;
  * Author:            neblabs
  * Author URI:        unknown
  * Text Domain:       coupons-plus-for-woocommerce
- * Domain Path:       /international
  * Requires at least: unknown
  * Requires PHP:      unknown
  * Requires Plugins:  woocommerce
@@ -20,4 +19,4 @@ use CouponsPlus\Original\Installation;
 /*
  * this is another comment: should be ignored!
  */
-echo "this is a plugin test!"; // new again and again
+//echo "this is a plugin test!"; // new again and again
