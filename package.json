@@ -15,6 +15,9 @@
     "@playwright/test": "^1.62.1",
     "@types/node": "^20.19.43"
   },
+  "optionalDependencies": {
+    "fsevents": "^2.3.2"
+  },
   "scripts": {
     "env:start": "wp-env start",
     "wp-env": "wp-env",
