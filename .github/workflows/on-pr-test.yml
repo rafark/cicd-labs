@@ -1,0 +1,14 @@
+name: PR smoke tests workflow call test
+
+on: 
+  pull_request:
+    paths-ignore:
+      - '.github/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+    call_smoke_tests_workflow:
+        uses: rafark/cicd-labs/.github/workflows/smoke-tests.yml@main
