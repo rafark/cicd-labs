@@ -1,0 +1,28 @@
+{
+  "name": "coupons-plus",
+  "version": "1.0.0",
+  "description": "=== Coupons+ === Contributors: neblabs Tags: woocommerce, coupons, bogo, discounts, pricing Requires at least: unknown Tested up to: unknown Stable tag: unknown Requires PHP: unknown License: GPLv3 License URI: https://www.gnu.org/licenses/gpl-3.0.html",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "@woocommerce/e2e-utils-playwright": "^0.5.1",
+    "@wordpress/e2e-test-utils-playwright": "^1.53.0",
+    "undici-types": "^8.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^20.19.43"
+  },
+  "scripts": {
+    "env:start": "wp-env start",
+    "wp-env": "wp-env",
+    "e2e:start:app": "cd app/scripts/dashboard && npm run dev",
+    "e2e:smoke": "WP_BASE_URL=http://localhost:8888 npx playwright test",
+    "e2e:tools:remove-cache": "rm -rf artifacts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
