@@ -1,9 +1,7 @@
 name: CI Smoke Tests
 
 on: 
-  pull_request:
-    paths-ignore:
-      - '.github/**'
+  workflow_call:
 
 defaults:
   run:
@@ -162,6 +160,8 @@ jobs:
           uses: kenji-miyake/setup-git-cliff@v1
 
         - name: Inject changelog data
+          env: 
+            EVENT_NAME: ${{ github.event_name }}
           run: |
             curl -L https://raw.githubusercontent.com/neblabs/wp-changelog-injector/main/install.sh | bash
             
@@ -169,7 +169,7 @@ jobs:
             command -v wp-changelog-injector
 
             # on pull request get the changelog from the latest tag instead of the previous which is for on tags push.
-            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            if [ "$EVENT_NAME" = "pull_request" ]; then
               # this flag is passed to wp-changelog-injector
               latest=--latest
             fi
