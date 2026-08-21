@@ -72,7 +72,7 @@ jobs:
                     [ -f "$file" ] && php -l "$file"
                 done
     # ==============================================================================
-    #  Now lets build the initial artifact, without compiling js 
+    #  Now lets build the initial artifact and run some smoke tests on it. 
     # ==============================================================================
     initial-build:
       runs-on: ubuntu-latest
@@ -181,7 +181,7 @@ jobs:
             bash -x wp-changelog-injector --readme "${{ steps.edp-build.outputs.buildDir }}"/readme.md --changelog "${{ steps.edp-build.outputs.buildDir }}"/changelog.md "$latest"
             
         # ------------------------------------------------
-        #  Save it to a new tmp branch for testing 
+        #  Save it to a new tmp branch for manual inspection 
         # ------------------------------------------------
         - name: Deploy build output to dynamic preview branch
           uses: JamesIves/github-pages-deploy-action@v4
@@ -219,3 +219,27 @@ jobs:
             slug: coupons-plus-for-woocommerce
             ignore-codes: |
               stable_tag_mismatch
+        # ------------------------------------------------
+        #  So finally, run the playwright tests!
+        # ------------------------------------------------
+        # pretty sure plugin check sets node but lets explicitly do it here anyway
+        - uses: actions/setup-node@v6
+          with:
+            node-version: lts/*
+        - name: Install Playwright dependencies
+          run: npm ci
+
+        - name: Install Playwright Browsers
+          run: npx playwright install chrome
+
+        - name: Run Smoke Tests
+          env: 
+            WP_BASE_URL: http://localhost:8888
+          run: npx playwright test
+          
+        - uses: actions/upload-artifact@v4
+          if: ${{ !cancelled() }}
+          with:
+            name: playwright-report
+            path: playwright-report/
+            retention-days: 30
