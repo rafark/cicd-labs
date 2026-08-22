@@ -131,11 +131,22 @@ jobs:
         - name: Run the edp builder
           id: edp-build
           run: |
-            # ion know if is exec so lets ensure it is
             chmod u+x ./edp
-            
-            buildDir=$(./edp build --target $RUNNER_TEMP/build --silent)
-            echo "buildDir=$buildDir" >> $GITHUB_OUTPUT
+            [[ -f edp-shell ]] && chmod u+x ./edp-shell
+
+            # Route PHP errors to stderr so stdout only contains the build path
+            buildDir=$(php -d display_errors=stderr \
+                          -d error_reporting="E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED & ~E_WARNING & ~E_NOTICE" \
+                          ./edp build --target "$RUNNER_TEMP/build" --silent)
+            exitCode=$?
+
+            if [ $exitCode -ne 0 ] || [ -z "$buildDir" ]; then
+              echo "Error: EDP build failed with exit code $exitCode." >&2
+              echo "Output captured in stdout was: $buildDir" >&2
+              exit 1
+            fi
+
+            echo "buildDir=$buildDir" >> "$GITHUB_OUTPUT"
         # ------------------------------------------------
         #  Inject the headers into the build
         # ------------------------------------------------
