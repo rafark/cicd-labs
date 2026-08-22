@@ -128,6 +128,11 @@ jobs:
         # ------------------------------------------------
         #  create base initial build, lacks some transformations
         # ------------------------------------------------
+        - name: Run before edp build
+          run: |
+            if composer | grep -q pre-build; then
+              composer run pre-build
+            fi
         - name: Run the edp builder
           id: edp-build
           run: |
