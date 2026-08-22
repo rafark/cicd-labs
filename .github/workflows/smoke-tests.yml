@@ -134,20 +134,22 @@ jobs:
             chmod u+x ./edp
             [[ -f edp-shell ]] && chmod u+x ./edp-shell
 
-            # Route PHP errors to stderr so stdout only contains the build path
-            buildDir=$(php -d display_errors=stderr \
-                          -d error_reporting="E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED & ~E_WARNING & ~E_NOTICE" \
-                          ./edp build --target "$RUNNER_TEMP/build" --silent)
+            # Route PHP errors to stderr and capture raw stdout
+            rawOutput=$(php -d display_errors=stderr \
+                            -d error_reporting="E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED & ~E_WARNING & ~E_NOTICE" \
+                            ./edp build --target "$RUNNER_TEMP/build" --silent)
             exitCode=$?
+
+            # Trim any accidental whitespace or newlines
+            buildDir=$(echo "$rawOutput" | xargs)
 
             if [ $exitCode -ne 0 ] || [ -z "$buildDir" ]; then
               echo "Error: EDP build failed with exit code $exitCode." >&2
-              echo "Output captured in stdout was: $buildDir" >&2
+              echo "Output captured in stdout was: $rawOutput" >&2
               exit 1
             fi
 
-            echo "buildDir=$buildDir" >> "$GITHUB_OUTPUT"
-        # ------------------------------------------------
+            echo "buildDir=$buildDir" >> "$GITHUB_OUTPUT"        # ------------------------------------------------
         #  Inject the headers into the build
         # ------------------------------------------------
         - name: Inject headers data
