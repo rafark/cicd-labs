@@ -134,7 +134,8 @@ jobs:
             # ion know if is exec so lets ensure it is
             chmod u+x ./edp
             
-            buildDir=$(./edp build --target $RUNNER_TEMP/build --silent)
+            # some edp forms may depend on an older version and so we need to suppress all warnings to get the build dir output from the actual command
+            buildDir=$(php -d display_errors=On -d error_reporting="E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED & ~E_WARNING & ~E_NOTICE" ./edp build --target $RUNNER_TEMP/build --silent)
             echo "buildDir=$buildDir" >> $GITHUB_OUTPUT
         # ------------------------------------------------
         #  Inject the headers into the build
