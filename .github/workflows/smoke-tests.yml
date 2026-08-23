@@ -73,6 +73,7 @@ jobs:
     #  Now lets build the initial artifact, without compiling js 
     # ==============================================================================
     initial-build:
+      timeout-minutes: 15 # dont go over 15 minutes. the fact that you're over 10 means something is wrong but lets give it a little window so that we dont interrupt this at exactly 10 minutes but make sure if something is stuck in one of the steps it doesnt go on forever eating all our allocated minutes.
       runs-on: ubuntu-latest
       permissions:
         contents: write
