@@ -251,11 +251,30 @@ jobs:
               stable_tag_mismatch
 
         # ------------------------------------------------
-        #  Finally run the smoke tests and we're done
+        #  Finally run the e2e smoke tests and we're done
         # ------------------------------------------------
         # --------  but before that, lets make sure the ports are working as expected --------
-        - name: Check network for playwright tests
+        - name: Extract wp env url and check network for playwright tests
+          id: wp-env-network
           run: |
+            # Target the exact Compose service label for the primary WordPress instance
+            CONTAINER_ID=$(docker ps -q --filter "label=com.docker.compose.service=wordpress")
+
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "ERROR: Could not find active WordPress container via compose label" >&2
+              exit 1
+            fi
+
+            # Extract the host port mapped to container port 80
+            WP_PORT=$(docker port "$CONTAINER_ID" 80 | head -n 1 | awk -F: '{print $NF}')
+
+            echo "Detected primary WordPress service running on port $WP_PORT"
+            wpBaseURL=http://127.0.0.1:$WP_PORT
+            
+            # Export WP_BASE_URL for Playwright and all subsequent steps
+            echo "WP_BASE_URL=$wpBaseURL" >> $GITHUB_OUTPUT
+
+            echo using WP_BASE_URL = "$wpBaseURL"
             echo "=== Container & Port Mappings ==="
             dockerPorts=$(docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}")
 
@@ -263,8 +282,8 @@ jobs:
             cat <<<"$dockerPorts"
 
             echo "=== WordPress Port Health Check ==="
-            curl -I --fail --connect-timeout 5 http://127.0.0.1:8888 || { echo "IPv4 127.0.0.1 unreachable" 1>&2; exit 1; }
-            curl -I --fail --connect-timeout 5 http://localhost:8888 || { echo "localhost (IPv6) unreachable" 1>&2; }
+            curl -I --fail --connect-timeout 5 "$wpBaseURL" || { echo "wp base url: $wpBaseURL unreachable" 1>&2; exit 1; }
+            curl -I --fail --connect-timeout 5 http://localhost:$WP_PORT || { echo "localhost (IPv6) unreachable" 1>&2; }
         # --------  now wp-env already sets up node but lets use this here for explicitness sake --------
         - uses: actions/setup-node@v6
           with:
@@ -279,7 +298,7 @@ jobs:
         - name: Run Playwright tests
           run: npx playwright test
           env:
-            WP_BASE_URL: http://127.0.0.1:8888
+            WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
 
         - uses: actions/upload-artifact@v4
           if: ${{ !cancelled() }}
