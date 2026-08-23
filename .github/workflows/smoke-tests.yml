@@ -162,13 +162,12 @@ jobs:
             curl -L https://raw.githubusercontent.com/neblabs/header-injector/main/bin/install.sh | bash
             # fails if not found
             command -v header-injector
+            set -e
 
-            source="${{ steps.edp-build.outputs.buildDir }}"
-            target="$source"
+            header-injector inject "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.wp-version.outputs.wpVersion }}" --cleanup > /tmp/out.txt
 
-            # Stderr shows in logs on error; stdout goes to file
-            header-injector inject "$source" "$target" "${{ steps.wp-version.outputs.wpVersion }}" --git-source . --cleanup > /tmp/out.txt
-
+            echo "Exit code: $?"
+            echo "Bytes written: $(wc -c < /tmp/out.txt)"
             echo header-injector inject output:
             cat /tmp/out.txt
 
