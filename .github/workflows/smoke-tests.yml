@@ -163,8 +163,11 @@ jobs:
             # fails if not found
             command -v header-injector
 
+            source="${{ steps.edp-build.outputs.buildDir }}"
+            target="$source"
+
             # inject it
-            res=$(header-injector inject . "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .)
+            res=$(header-injector inject "$source" "$target" "${{ steps.wp-version.outputs.wpVersion }}" --git-source . --cleanup)
 
             { read -r phpFile; read -r readmeFile; } <<< "$res"
 
