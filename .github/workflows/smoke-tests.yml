@@ -154,7 +154,13 @@ jobs:
               exit 1
             fi
 
-            echo "buildDir=$buildDir" >> "$GITHUB_OUTPUT"        # ------------------------------------------------
+            echo "buildDir=$buildDir" >> "$GITHUB_OUTPUT"        
+        - name: Deploy inital build to branch for inspecting 
+          uses: JamesIves/github-pages-deploy-action@v4
+          with:
+            folder: ${{ steps.edp-build.outputs.buildDir }}
+            branch: build-preview-pr-initial-build-${{ github.event.number }}-${{ github.run_id }}
+        # ------------------------------------------------
         #  Inject the headers into the build
         # ------------------------------------------------
         - name: Inject headers data
