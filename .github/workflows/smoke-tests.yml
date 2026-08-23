@@ -164,7 +164,7 @@ jobs:
             command -v header-injector
 
             # inject it
-            res=$(header-injector inject . "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .)
+            res=$(header-injector inject "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .)
 
             { read -r phpFile; read -r readmeFile; } <<< "$res"
 
