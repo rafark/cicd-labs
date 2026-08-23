@@ -244,6 +244,7 @@ jobs:
         - name: Run plugin check
           uses: wordpress/plugin-check-action@v1
           with:
+            repo-token: ${{ github.token }}
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
             slug: coupons-plus-for-woocommerce
             ignore-codes: |
