@@ -169,10 +169,14 @@ jobs:
             # Stderr shows in logs on error; stdout goes to file
             header-injector inject "$source" "$target" "${{ steps.wp-version.outputs.wpVersion }}" --git-source . --cleanup > /tmp/out.txt
 
+            echo header-injector inject output:
+            cat /tmp/out.txt
+
             mapfile -t files < /tmp/out.txt
 
             phpFile="${files[0]}"
             readmeFile="${files[1]}"
+            
             
             #validate it
             header-injector validate "$phpFile" "$readmeFile" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .
