@@ -166,9 +166,15 @@ jobs:
             source="${{ steps.edp-build.outputs.buildDir }}"
             target="$source"
 
-            # Stderr shows in logs on error; stdout goes to file
-            header-injector inject "$source" "$target" "${{ steps.wp-version.outputs.wpVersion }}" --git-source . --cleanup > /tmp/out.txt
+            # Debug: check return code and byte count of the output file
+            php -d display_errors=stderr \
+                            -d error_reporting="E_ALL & E_DEPRECATED & E_USER_DEPRECATED & E_WARNING & E_NOTICE" \
+                            header-injector inject "$source" "$target" "7.1" --git-source . --cleanup > /tmp/out.txt
 
+            echo "Exit code: $?"
+            echo "Bytes written: $(wc -c < /tmp/out.txt)"
+            echo source "$source"
+            echo target "$target"
             echo header-injector inject output:
             cat /tmp/out.txt
 
