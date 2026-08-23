@@ -166,11 +166,14 @@ jobs:
             source="${{ steps.edp-build.outputs.buildDir }}"
             target="$source"
 
-            # inject it
-            res=$(header-injector inject "$source" "$target" "${{ steps.wp-version.outputs.wpVersion }}" --git-source . --cleanup)
+            # Stderr shows in logs on error; stdout goes to file
+            header-injector inject "$source" "$target" "${{ steps.wp-version.outputs.wpVersion }}" --git-source . --cleanup > /tmp/out.txt
 
-            { read -r phpFile; read -r readmeFile; } <<< "$res"
+            mapfile -t files < /tmp/out.txt
 
+            phpFile="${files[0]}"
+            readmeFile="${files[1]}"
+            
             #validate it
             header-injector validate "$phpFile" "$readmeFile" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .
         # ------------------------------------------------
