@@ -296,9 +296,12 @@ jobs:
           run: npx playwright install chrome
 
         - name: Run Playwright tests
-          run: npx playwright test
+          # at the github-level, might increase when tests grow...
+          timeout-minutes: 5
+          run: npx playwright test --reporter=list
           env:
             WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
+            DEBUG: pw:api
 
         - uses: actions/upload-artifact@v4
           if: ${{ !cancelled() }}
