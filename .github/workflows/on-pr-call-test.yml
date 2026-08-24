@@ -2,8 +2,6 @@ name: PR smoke tests workflow call test
 
 on: 
   pull_request:
-    paths-ignore:
-      - '.github/**'
 
 permissions:
     contents: write
