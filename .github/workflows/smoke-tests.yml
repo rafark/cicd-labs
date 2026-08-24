@@ -258,19 +258,23 @@ jobs:
         - name: Extract wp env url and check network for playwright tests
           id: wp-env-network
           run: |
-            # Target the exact Compose service label for the primary WordPress instance
-            CONTAINER_ID=$(docker ps -q --filter "label=com.docker.compose.service=wordpress")
+            # Restrict lookup strictly to wp-env's CLI container
+            CLI_CONTAINER=$(docker ps -q \
+              --filter "label=com.docker.compose.service=cli" \
+              --filter "name=wp-env")
 
-            if [ -z "$CONTAINER_ID" ]; then
-              echo "ERROR: Could not find active WordPress container via compose label" >&2
+            if [ -z "$CLI_CONTAINER" ]; then
+              echo "ERROR: Could not find wp-env CLI container" >&2
               exit 1
             fi
 
-            # Extract the host port mapped to container port 80
-            WP_PORT=$(docker port "$CONTAINER_ID" 80 | head -n 1 | awk -F: '{print $NF}')
+            # Fetch siteurl directly from the DB
+            wpBaseURL=$(docker exec "$CLI_CONTAINER" wp option get siteurl)
 
-            echo "Detected primary WordPress service running on port $WP_PORT"
-            wpBaseURL=http://localhost:$WP_PORT
+            if [ -z "$wpBaseURL" ]; then
+              echo "ERROR: Failed to retrieve siteurl from WP-CLI" >&2
+              exit 1
+            fi
             
             # Export WP_BASE_URL for Playwright and all subsequent steps
             echo "WP_BASE_URL=$wpBaseURL" >> $GITHUB_OUTPUT
