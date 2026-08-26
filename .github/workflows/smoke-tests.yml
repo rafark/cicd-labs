@@ -314,3 +314,17 @@ jobs:
             name: playwright-report
             path: playwright-report/
             retention-days: 30
+        - name: Dump WordPress debug log on failure
+          if: failure()
+          run: |
+            CLI_CONTAINER=$(docker ps -q \
+              --filter "label=com.docker.compose.service=cli" \
+              --filter "name=wp-env")
+
+            if [ -z "$CLI_CONTAINER" ]; then
+              echo "CLI container not found" >&2
+              exit 0
+            fi
+
+            echo "=== wp-content/debug.log ==="
+            docker exec "$CLI_CONTAINER" cat wp-content/debug.log 2>/dev/null || echo "no debug.log found"
