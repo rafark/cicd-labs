@@ -2,6 +2,12 @@ name: CI Smoke Tests
 
 on: 
   workflow_call:
+    inputs:
+      upload-build:
+        required: false
+        type: boolean
+        default: false
+        description: Uploads build as artifact only when all steps ran successfully
 
 defaults:
   run:
@@ -307,6 +313,17 @@ jobs:
           env:
             WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
             DEBUG: pw:api
+
+        # ------------------------------------------------
+        #  so now lets build the artifact if the build succeeded.
+        # ------------------------------------------------
+        - name: Upload the Built Plugin Artifact on Success
+          if: ${{ inputs.upload-build && !failure() }}
+          uses: actions/upload-artifact@v7.0.1
+          with:
+            name: plugin-build
+            path: ${{ steps.edp-build.outputs.buildDir }}
+            retention-days: 3
 
         - uses: actions/upload-artifact@v4
           if: ${{ !cancelled() }}
