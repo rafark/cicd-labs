@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# laughable simple placholder script for edp build
+
+# shift the "build" command from edp build
+shift
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --target)
+            target=$2
+            shift 2
+        ;;
+        --silent)
+            # this mock edp is silent by default but lets parse it to adhere to the spec/cli
+            shift 1
+        ;;
+    esac
+done
+
+mkdir -p "$target"
+
+# just copy the files over; this is only a mock command and you're responsible for providing your own edp.
+for file in *; do
+    if ! [[ "$file" =~ "node_modules" ]]; then
+        cp -r "$file" "$target"
+    fi
+done
+
+# then echo the dir
+
+echo "$target"
