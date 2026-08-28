@@ -1,0 +1,21 @@
+{
+    "name": "rafa/cicd-labs",
+    "description": "this is a dummy composer for the workflow",
+    "license": "MIT",
+    "scripts": {
+        "install-scripts-ci": "true",
+        "build-scripts": "true"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rafa\\CicdLabs\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "rafark",
+            "email": "rafarks@gmail.com"
+        }
+    ],
+    "require": {}
+}
