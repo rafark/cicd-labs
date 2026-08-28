@@ -1,5 +1,5 @@
-name: CI Smoke Tests
-
+name: "CI: Build and Run Light Smoke Tests"
+description: "Builds the plugin files using the git tags for versioning and for generation logs using conventional commits. Build guarantees the wp plugin check passes and by default it runs your playwright smoke tests."
 on: 
   workflow_call:
     inputs:
@@ -8,6 +8,11 @@ on:
         type: boolean
         default: false
         description: Uploads build as artifact only when all steps ran successfully
+      run-playwright-tests:
+        required: false
+        type: boolean
+        default: true
+        description: Run the playwright e2e smoke tests (light)
 
 defaults:
   run:
@@ -45,8 +50,8 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                # php-version: [7.4, 8.0, 8.1, 8.2, 8.3, 8.4]
-                php-version: [7.4]
+                # php-version: [7.4, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5] 
+                php-version: [7.4, 8.5] # to save us some compute and time we'll only run against these versions. They run in parallel but still they can take more wall-clock time  regardless.
         steps:
             # ------------------------------------------------
             #  setup...
@@ -309,7 +314,7 @@ jobs:
         - name: Run Playwright tests
           # at the github-level, might increase when tests grow...
           timeout-minutes: 5
-          run: npx playwright test --reporter=list
+          run: npx playwright test e2e/smoke --reporter=github
           env:
             WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
             DEBUG: pw:api
