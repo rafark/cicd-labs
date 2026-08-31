@@ -1,0 +1,54 @@
+## [unreleased]
+
+### 🚀 Features
+
+- Added changelog injector
+- Added changelog injector
+- Added playwright tests to the workflow
+- Added optional prebuild step (#65)
+- Added repo tokenn to plugin check action (#75)
+- Show wp-env error logs on failure (#86)
+- Optionally upload build artifact on success (#87)
+- Added deploy.yml
+- Added linting to all php files in the build (#98)
+- Deploy to trunk after all tests have passed
+
+### 🐛 Bug Fixes
+
+- Removed extra single quotes
+- Added readme with expected struct
+- Added wp env json file to supress warnings
+- Added stable_tag_mismatch
+- Added write permissions to the test workflow file
+- Suppress notices and warnings when calling edp build (#62)
+- Fixed edp build
+- Changed wp_base_url env to 127.0.0.1:8888 and added some early network checks (#74)
+- The $maybeLatest variable in the changelog injector is now passed unquoted (#76)
+- Auto-detect the docker wp-env ports (#77)
+- Use localhost isntead of the ip address for WP_BASE_URL (#79)
+- Edp include index.php (#84)
+- Removed concurrency protections from deploy.yml (#92)
+- Added php setup to deploy.yml (#93)
+- Fix pq call (#94)
+- Checkout early now (#95)
+- Checkout now is the first thing to run (#96)
+- Removed duplicated checkout step (#97)
+- Install wp-env and removed e2e/smoke from the test runner (#99)
+- Normalize input version before using it (#101)
+
+### 🚜 Refactor
+
+- Renamed the file to smoke-tests
+- [**breaking**] Converted the smoke tests into a reusable workflow
+- The smoke tests is now a reusable workflow
+- Get the WP_BASE_URL from the wp cli from the wp-env container (#85). Fixes #81
+- [**breaking**] Moved smoke file to build, added options and enforced tests to be in e2e/smoke
+
+### ⚡ Performance
+
+- Added timeouts and log debugging to playwright tests (#78)
+
+### ⚙️ Miscellaneous Tasks
+
+- Removed paths-ignore: .github/** from pr trigger workflow (#83)
+cat: /home/runner/work/_temp/build/changelog.md: No such file or directory
