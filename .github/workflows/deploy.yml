@@ -200,7 +200,21 @@ jobs:
         env:
           WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
           DEBUG: pw:api
-
+      # ------------------------------------------------
+      #  Finally deploy new tag to trunk to make it live
+      # ------------------------------------------------
+      - name: Deploy new tag to trunk
+        run: |
+          version=${{ steps.normalized-version.outputs.version }}
+          pluginSlug=${{ steps.setup-slug.outputs.slug }}
+          
+          svnmucc \
+            --username "$SVN_USER" --password "$SVN_PASS" \
+            --no-auth-cache --non-interactive \
+            -m "Release $version: point trunk at tags/$version" \
+            -U "https://plugins.svn.wordpress.org/$pluginSlug" \
+            rm trunk \
+            cp HEAD "tags/$version" trunk
       - name: Dump WordPress debug log on failure
         if: failure()
         run: |
