@@ -1,0 +1,194 @@
+name: "Deploy tag to WordPress Repo"
+
+on: 
+  workflow_call:
+    inputs:
+      version: 
+        type: string
+        required: true
+        description: The version to use to create the tag in the remote wp plugins repo
+    secrets:
+      SVN_USER: 
+        required: true
+      SVN_PASS: 
+        required: true
+
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs: 
+  build-from-tag:
+    name: Build the plugin using the latest tag
+    uses: ./.github/workflows/build.yml
+    with:
+      upload-build: true
+  deploy-build-tag:
+    needs: build-from-tag
+    name: Deploy the build to the svn plugins repo as a new tag
+    runs-on: ubuntu-latest
+    steps:
+      # ------------------------------------------------
+      #  But before everything else let's download the build
+      # ------------------------------------------------
+      - name: Download plugin build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-build
+          path: plugin-build # 2. Extract the built files into ./plugin-build
+      - name: Verify artifact content
+        run: |
+          if [ ! -d "./plugin-build" ] || [ -z "$(ls -A ./plugin-build)" ]; then
+            echo "::error::Artifact 'plugin-build' is empty or missing!"
+            exit 1
+          fi
+          echo "Artifact has contents!"
+
+          ls -la ./plugin-build
+      # --------  add the local bin to path --------
+      - name: Add ~/.local/bin to the path PATH, used by some deps bellow
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+        
+      # --------  Setup the plugin slug --------
+      - name: Setup plugin slug
+        id: setup-slug
+        run: |
+          #setup
+          curl -L https://raw.githubusercontent.com/neblabs/pq/main/bin/install.sh | bash
+          
+          #run
+          slug=$(pq env.php slug) # assign it here so that should pq fail we exit the script
+
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
+      # ------------------------------------------------
+      #  Install svn
+      # ------------------------------------------------
+      - name: Install SVN on Ubuntu
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y subversion
+      # ------------------------------------------------
+      #  Run the svn deployment
+      # ------------------------------------------------
+      - name: "Run wp-svn-deploy"
+        env:
+          SVN_USER: ${{ secrets.SVN_USER }}
+          SVN_PASS: ${{ secrets.SVN_PASS }}
+        run: |
+          echo "::group::installing wp-svn-deploy"
+          curl -L https://raw.githubusercontent.com/neblabs/wp-svn-deploy/main/install.sh | sh
+          echo "::endgroup::"
+
+          echo "::group::running wp-svn-deploy...."
+          wp-svn-deploy -slug ${{ steps.setup-slug.outputs.slug }} -build ./plugin-build -version ${{ inputs.version }}
+          echo "::endgroup::"      
+      # --------  Checking out even though we are not using git tags or the plugin source code, we need the source for the e2e tests which are only found on the git repo so --------
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      # ------------------------------------------------
+      #  Before checking out, let's download the newly deployed tag which is the one that we'll be testing against
+      # ------------------------------------------------
+      - name: Fetch and setup dist dir from the new tag
+        run: |
+          tagDist=$(mktemp -d)/tag-dist
+
+          svn export https://plugins.svn.wordpress.org/${{ steps.setup-slug.outputs.slug }}/tags/${{ inputs.version }} "$tagDist"
+
+          # save it to the global env
+          echo "TAG_DIST=$tagDist" >> "$GITHUB_ENV"
+      - name: Setup wp-env config files
+        run: |
+          # lets place the e2e wp-env config file to the wp-env json, completely overriding any .wp-env.json. 
+          # if no e2e config file then just add a new empty .wp-env.json to override any other that may affect the actual env
+          # eg: if you had a .wp-env.json with "plugins": ["."] we don't want to install the local repo we want to use the actual one from the 
+          # build not the one from the src code
+          # so in your e2e config file "plugins" key, never add the "." since that will be mounted with the built artifact
+          
+          mv .wp-env.e2e.json .wp-env.json 2>/dev/null || echo "{}" > .wp-env.json
+
+          # lets add the actual build to the mappings. 
+          echo "{\"mappings\": {\"wp-content/plugins/${{ steps.setup-slug.outputs.slug }}\": \"$TAG_DIST\"}}" > .wp-env.override.json
+      # ------------------------------------------------
+      #  Setup wp-env
+      # ------------------------------------------------
+      - name: Setup wp-env
+        run: |
+          # so lets boot up wp-env! with the build plugin as a mounted dependency
+          wp-env start
+
+          # since the plugin was mounted. we need to enable it. this is by design because if the plugin has other plugin dependencies, it will no be able to be installed by wp-cli.
+          wp-env run cli wp plugin activate ${{ steps.setup-slug.outputs.slug }}
+      # ------------------------------------------------
+      #  All right so up and running lets now just run the tests and call it a day
+      # ------------------------------------------------
+      - name: Extract wp env url and check network for playwright tests
+        id: wp-env-network
+        run: |
+          # Restrict lookup strictly to wp-env's CLI container
+          CLI_CONTAINER=$(docker ps -q \
+            --filter "label=com.docker.compose.service=cli" \
+            --filter "name=wp-env")
+
+          if [ -z "$CLI_CONTAINER" ]; then
+            echo "ERROR: Could not find wp-env CLI container" >&2
+            exit 1
+          fi
+
+          # Fetch siteurl directly from the DB
+          wpBaseURL=$(docker exec "$CLI_CONTAINER" wp option get siteurl)
+
+          if [ -z "$wpBaseURL" ]; then
+            echo "ERROR: Failed to retrieve siteurl from WP-CLI" >&2
+            exit 1
+          fi
+          
+          # Export WP_BASE_URL for Playwright and all subsequent steps
+          echo "WP_BASE_URL=$wpBaseURL" >> $GITHUB_OUTPUT
+
+          echo using WP_BASE_URL = "$wpBaseURL"
+          echo "=== Container & Port Mappings ==="
+          dockerPorts=$(docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}")
+
+          echo "Docker ports"
+          cat <<<"$dockerPorts"
+
+          echo "=== WordPress Port Health Check ==="
+          curl -I --fail --connect-timeout 5 "$wpBaseURL" || { echo "wp base url: $wpBaseURL unreachable" 1>&2; exit 1; }
+          curl -I --fail --connect-timeout 5 http://localhost:$WP_PORT || { echo "localhost (IPv6) unreachable" 1>&2; }
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install chrome
+
+      - name: Run Playwright tests
+        # at the github-level, might increase when tests grow...
+        timeout-minutes: 5
+        run: npx playwright test e2e/smoke --reporter=github
+        env:
+          WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
+          DEBUG: pw:api
+
+      - name: Dump WordPress debug log on failure
+        if: failure()
+        run: |
+          CLI_CONTAINER=$(docker ps -q \
+            --filter "label=com.docker.compose.service=cli" \
+            --filter "name=wp-env")
+
+          if [ -z "$CLI_CONTAINER" ]; then
+            echo "CLI container not found" >&2
+            exit 0
+          fi
+
+          echo "=== wp-content/debug.log ==="
+          docker exec "$CLI_CONTAINER" cat wp-content/debug.log 2>/dev/null || echo "no debug.log found"
