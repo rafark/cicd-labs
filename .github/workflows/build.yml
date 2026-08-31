@@ -229,6 +229,20 @@ jobs:
           with:
             folder: ${{ steps.edp-build.outputs.buildDir }}
             branch: build-preview-pr-${{ github.event.number }}-${{ github.run_id }}
+        # --------  We have to lint all files even those we don't own because the wp repo will reject them on svn commit if they have linting errors so yeah better early than later --------
+        - name: "Lint PHP files in build dir"
+          run: |
+            echo "::group::linting EVERY SINGLE php file in the build"
+            lintOutput=$(mktemp)
+            if ! find ${{ steps.edp-build.outputs.buildDir }} -name '*.php' -print0 | xargs -0 -n1 -P4 php -l > "$lintOutput" 2>&1; then
+              echo "PHP lint failed -- see errors below:"
+              grep -v "No syntax errors detected" "$lintOutput"
+              rm -f "$lintOutput"
+              exit 1
+            fi
+            rm -f "$lintOutput"
+            echo "Lint OK."
+            echo "::endgroup::"
         # ------------------------------------------------
         #  Now the plugin check tests
         # ------------------------------------------------
