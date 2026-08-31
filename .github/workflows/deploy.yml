@@ -52,9 +52,6 @@ jobs:
           echo "Artifact has contents!"
 
           ls -la ./plugin-build
-      # --------  Checking out even though we are not using git tags or the plugin source code, we need the source for the e2e tests which are only found on the git repo so --------
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
       # --------  add the local bin to path --------
       - name: Add ~/.local/bin to the path PATH, used by some deps bellow
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
