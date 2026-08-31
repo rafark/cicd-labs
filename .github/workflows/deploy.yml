@@ -52,7 +52,12 @@ jobs:
       # --------  add the local bin to path --------
       - name: Add ~/.local/bin to the path PATH, used by some deps bellow
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-        
+      # --------  install php needed for the pq bellow... --------
+      - name: Setup PHP Action
+        uses: shivammathur/setup-php@2.37.2
+        with: 
+          php-version: 8.4
+          coverage: none
       # --------  Setup the plugin slug --------
       - name: Setup plugin slug
         id: setup-slug
