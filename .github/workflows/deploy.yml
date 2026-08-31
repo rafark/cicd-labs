@@ -32,6 +32,9 @@ jobs:
     name: Deploy the build to the svn plugins repo as a new tag
     runs-on: ubuntu-latest
     steps:
+      # --------  Checking out even though we are not using git tags or the plugin source code, we need the source for: the env.php and for the e2e tests which are only found on the git repo so --------
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
       # ------------------------------------------------
       #  But before everything else let's download the build
       # ------------------------------------------------
