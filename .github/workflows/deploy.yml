@@ -66,7 +66,7 @@ jobs:
           curl -L https://raw.githubusercontent.com/neblabs/pq/main/bin/install.sh | bash
           
           #run
-          slug=$(pq env.php slug) # assign it here so that should pq fail we exit the script
+          slug=$(pq get env.php slug) # assign it here so that should pq fail we exit the script
 
           echo "slug=$slug" >> "$GITHUB_OUTPUT"
       # ------------------------------------------------
