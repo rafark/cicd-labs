@@ -9,4 +9,4 @@ permissions:
 
 jobs:
     call_smoke_tests_workflow:
-        uses: rafark/cicd-labs/.github/workflows/smoke-tests.yml@main
+        uses: rafark/cicd-labs/.github/workflows/build.yml@main
