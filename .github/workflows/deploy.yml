@@ -18,9 +18,7 @@ defaults:
   run:
     shell: bash
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# note: cannot add concurrency protections here because it clashes with build.yml
 
 jobs: 
   build-from-tag:
