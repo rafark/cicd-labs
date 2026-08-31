@@ -49,6 +49,9 @@ jobs:
           echo "Artifact has contents!"
 
           ls -la ./plugin-build
+      # --------  Checking out even though we are not using git tags or the plugin source code, we need the source for the e2e tests which are only found on the git repo so --------
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
       # --------  add the local bin to path --------
       - name: Add ~/.local/bin to the path PATH, used by some deps bellow
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
@@ -91,11 +94,8 @@ jobs:
           echo "::group::running wp-svn-deploy...."
           wp-svn-deploy -slug ${{ steps.setup-slug.outputs.slug }} -build ./plugin-build -version ${{ inputs.version }}
           echo "::endgroup::"      
-      # --------  Checking out even though we are not using git tags or the plugin source code, we need the source for the e2e tests which are only found on the git repo so --------
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
       # ------------------------------------------------
-      #  Before checking out, let's download the newly deployed tag which is the one that we'll be testing against
+      #  let's download the newly deployed tag which is the one that we'll be testing against
       # ------------------------------------------------
       - name: Fetch and setup dist dir from the new tag
         run: |
