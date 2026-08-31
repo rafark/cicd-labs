@@ -4,6 +4,7 @@ on:
   workflow_call:
     inputs:
       version: 
+        #NOTE!: DO NOT USE THIS DIRECTLY IN THE STEPS BELLOW. USE THE NORMALIZED VERSION THAT STRIPS V'S
         type: string
         required: true
         description: The version to use to create the tag in the remote wp plugins repo
@@ -40,6 +41,17 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
+      # ------------------------------------------------
+      #  But first lets normalize the passed version
+      # ------------------------------------------------
+      - name: Normalize version
+        id: normalized-version
+        run: |
+          passedVersion="${{ inputs.version }}"
+          normalizedVersion="${passedVersion#[vV]}"
+
+          echo "version=$normalizedVersion" >> "$GITHUB_OUTPUT"
+
       # ------------------------------------------------
       #  But before everything else let's download the build
       # ------------------------------------------------
@@ -97,7 +109,7 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::running wp-svn-deploy...."
-          wp-svn-deploy -slug ${{ steps.setup-slug.outputs.slug }} -build ./plugin-build -version ${{ inputs.version }}
+          wp-svn-deploy -slug ${{ steps.setup-slug.outputs.slug }} -build ./plugin-build -version ${{ steps.normalized-version.outputs.version }}
           echo "::endgroup::"      
       # ------------------------------------------------
       #  let's download the newly deployed tag which is the one that we'll be testing against
@@ -106,7 +118,7 @@ jobs:
         run: |
           tagDist=$(mktemp -d)/tag-dist
 
-          svn export https://plugins.svn.wordpress.org/${{ steps.setup-slug.outputs.slug }}/tags/${{ inputs.version }} "$tagDist"
+          svn export https://plugins.svn.wordpress.org/${{ steps.setup-slug.outputs.slug }}/tags/${{ steps.normalized-version.outputs.version }} "$tagDist"
 
           # save it to the global env
           echo "TAG_DIST=$tagDist" >> "$GITHUB_ENV"
