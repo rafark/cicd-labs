@@ -35,6 +35,11 @@ jobs:
       # --------  Checking out even though we are not using git tags or the plugin source code, we need the source for: the env.php and for the e2e tests which are only found on the git repo so --------
       - name: Checkout
         uses: actions/checkout@v7.0.1
+      # --------  for use later by wp-env and playwright --------
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
       # ------------------------------------------------
       #  But before everything else let's download the build
       # ------------------------------------------------
@@ -122,6 +127,8 @@ jobs:
       # ------------------------------------------------
       - name: Setup wp-env
         run: |
+          # first we have to install it
+          npm -g --no-fund i @wordpress/env
           # so lets boot up wp-env! with the build plugin as a mounted dependency
           wp-env start
 
@@ -177,7 +184,7 @@ jobs:
       - name: Run Playwright tests
         # at the github-level, might increase when tests grow...
         timeout-minutes: 5
-        run: npx playwright test e2e/smoke --reporter=github
+        run: npx playwright test --reporter=github
         env:
           WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
           DEBUG: pw:api
