@@ -20,6 +20,7 @@ defaults:
 
 # note: cannot add concurrency protections here because it clashes with build.yml
 
+
 jobs: 
   build-from-tag:
     name: Build the plugin using the latest tag
