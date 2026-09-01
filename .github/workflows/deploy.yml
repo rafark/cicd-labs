@@ -208,8 +208,8 @@ jobs:
             SVN_USER: ${{ secrets.SVN_USER }}
             SVN_PASS: ${{ secrets.SVN_PASS }}
         run: |
-          version=${{ steps.normalized-version.outputs.version }}
-          pluginSlug=${{ steps.setup-slug.outputs.slug }}
+          version="${{ steps.normalized-version.outputs.version }}"
+          pluginSlug="${{ steps.setup-slug.outputs.slug }}"
           
           svnmucc \
             --username "$SVN_USER" --password "$SVN_PASS" \
