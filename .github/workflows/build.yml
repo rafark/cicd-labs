@@ -219,6 +219,7 @@ jobs:
               maybeLatest=--latest
             fi
 
+            # updated to new version
             bash -x wp-changelog-injector --readme "${{ steps.edp-build.outputs.buildDir }}"/readme.md $maybeLatest # maybeLatest must be unquoted so that nothing is passed. doing "$maybeLatest" will pass a literal empty string when this isn't set. and this is a bool option so we ain't want to pass it when unset.
             
         # ------------------------------------------------
