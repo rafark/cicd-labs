@@ -199,6 +199,7 @@ jobs:
         run: npx playwright test --reporter=github
         env:
           WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
+          PLUGIN_VERSION: ${{ steps.normalized-version.outputs.version }}
           DEBUG: pw:api
       # ------------------------------------------------
       #  Finally deploy new tag to trunk to make it live
