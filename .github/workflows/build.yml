@@ -109,19 +109,20 @@ jobs:
             php-version: 8.4
             coverage: none
         
-        # --------  set wp version to use (latest) --------
-        - name: Set WP version to use
-          id: wp-version
-          run: |
-            echo "wpVersion=$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')" >> $GITHUB_OUTPUT
-        
-        # --------  Install versions finder --------
+        # --------  Install versions finder, this is used by: header-injector and the set-versions step. --------
         - name: Install versions-finder
           run: |
             curl -L https://raw.githubusercontent.com/neblabs/versions-finder/main/install.sh | bash
             # fails if not found
             command -v versions-finder
-          
+
+        # --------  set wp and plugin versions to use (latest) --------
+        - name: Set WP and plugin versions to use
+          id: set-versions
+          run: |
+            echo "wpVersion=$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')" >> $GITHUB_OUTPUT
+            echo "pluginVersion=$(versions-finder any --latest --output-strict-semver)" >> $GITHUB_OUTPUT
+
         # ------------------------------------------------
         #  lets build the js
         # ------------------------------------------------
@@ -182,7 +183,7 @@ jobs:
             command -v header-injector
             set -e
 
-            header-injector inject "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.wp-version.outputs.wpVersion }}" --cleanup > /tmp/out.txt
+            header-injector inject "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.edp-build.outputs.buildDir }}" "${{ steps.set-versions.outputs.wpVersion }}" --cleanup > /tmp/out.txt
 
             echo "Exit code: $?"
             echo "Bytes written: $(wc -c < /tmp/out.txt)"
@@ -196,7 +197,7 @@ jobs:
             
             
             #validate it
-            header-injector validate "$phpFile" "$readmeFile" "${{ steps.wp-version.outputs.wpVersion }}" --git-source .
+            header-injector validate "$phpFile" "$readmeFile" "${{ steps.set-versions.outputs.wpVersion }}" --git-source .
         # ------------------------------------------------
         #  Now for the changelog
         # ------------------------------------------------
@@ -251,7 +252,7 @@ jobs:
           run: |
             cat << EOF > .wp-env.override.json
             {
-              "core": "https://wordpress.org/wordpress-${{ steps.wp-version.outputs.wpVersion }}.zip",
+              "core": "https://wordpress.org/wordpress-${{ steps.set-versions.outputs.wpVersion }}.zip",
               "config": {
                 "WP_DEBUG": true,
                 "WP_DEBUG_DISPLAY": false,
@@ -264,7 +265,7 @@ jobs:
           uses: actions/cache@v4
           with:
             path: ~/.wp-env
-            key: wp-env-${{ runner.os }}-wp-${{ steps.wp-version.outputs.wpVersion }}
+            key: wp-env-${{ runner.os }}-wp-${{ steps.set-versions.outputs.wpVersion }}
             restore-keys: |
               wp-env-${{ runner.os }}-wp-
 
@@ -332,6 +333,7 @@ jobs:
           run: npx playwright test e2e/smoke --reporter=github
           env:
             WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
+            PLUGIN_VERSION: ${{ steps.set-versions.outputs.pluginVersion }}
             DEBUG: pw:api
 
         # ------------------------------------------------
