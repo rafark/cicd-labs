@@ -1,0 +1,55 @@
+name: Cleanup Old(er) Preview Branches - base
+
+on:
+  workflow_call:
+    inputs:
+      days_old:
+        description: 'Delete preview branches older than X days'
+        required: false
+        type: string
+        default: '1'
+      branch_regex:
+        description: 'Regex pattern matching branch names to delete (e.g. ^build-preview-pr-)'
+        required: false
+        type: string
+        default: '^build-preview-pr-'
+
+jobs:
+  prune-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prune old matching branches
+        shell: bash
+        env:
+          DAYS: ${{ inputs.days_old }}
+          REGEX: ${{ inputs.branch_regex }}
+        run: |
+          echo "Scanning branches matching regex: '$REGEX' older than $DAYS days..."
+          CUTOFF=$(date -d "$DAYS days ago" +%s)
+
+          git fetch --prune origin
+
+          # Inspect all remote branches
+          git for-each-ref --format="%(committerdate:unix) %(refname:lstrip=3)" refs/remotes/origin/ | while read -r commit_time branch; do
+            [ -z "$branch" ] && continue
+
+            # Safety check: Never delete default branches or the HEAD pointer
+            if [[ "$branch" == "HEAD" || "$branch" == "main" || "$branch" == "master" ]]; then
+              continue
+            fi
+
+            # Test branch against regex
+            if [[ "$branch" =~ $REGEX ]]; then
+              if [ "$commit_time" -lt "$CUTOFF" ]; then
+                echo "Deleting: $branch (committed $(date -d @"$commit_time" -Iseconds))"
+                git push origin --delete "$branch"
+              else
+                echo "Keeping (active): $branch (committed $(date -d @"$commit_time" -Iseconds))"
+              fi
+            fi
+          done
