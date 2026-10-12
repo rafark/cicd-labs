@@ -188,7 +188,8 @@ jobs:
           node-version: lts/*
           
       - name: Install dependencies
-        run: npm ci --no-audit
+        run: npm ci 
+        
 
       - name: Install Playwright Browsers
         run: npx playwright install chrome
