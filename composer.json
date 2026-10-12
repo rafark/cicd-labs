@@ -6,6 +6,7 @@
         "install-scripts-ci": "true",
         "build-scripts": "true",
         "test:install": "echo installing tests...",
+        "pre-test": "echo running before the tests...",
         "test:ci": "echo running tests..."
     },
     "autoload": {

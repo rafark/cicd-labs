@@ -126,6 +126,12 @@ jobs:
         - name: Install WP Test Suite & PHPUnit Dependencies
           run: composer run test:install
 
+        - name: Run before tests
+          run: |
+            if composer | grep -q pre-test; then
+              composer run pre-test
+            fi
+
         # Now for the actual meat: run the tests!
         - name: Run PHPUnit
           run: |
