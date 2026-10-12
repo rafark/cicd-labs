@@ -4,7 +4,9 @@
     "license": "MIT",
     "scripts": {
         "install-scripts-ci": "true",
-        "build-scripts": "true"
+        "build-scripts": "true",
+        "test:install": "echo installing tests...",
+        "test:ci": "echo running tests..."
     },
     "autoload": {
         "psr-4": {

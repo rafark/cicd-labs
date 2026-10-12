@@ -13,6 +13,11 @@ on:
         type: boolean
         default: true
         description: Run the playwright e2e smoke tests (light)
+      run-phpunit-tests:
+        required: false
+        type: boolean
+        default: true
+        description: "Run the WordPress PHPUnit integration tests. you'll need these composer scripts: test:install and test:ci"
 
 defaults:
   run:
@@ -80,6 +85,51 @@ jobs:
                 for file in ${{ steps.changed-php-files.outputs.all_changed_files }}; do
                     [ -f "$file" ] && php -l "$file"
                 done
+    # ==============================================================================
+    #  PHPUnit Integration Tests (PHP 7.4)
+    # ==============================================================================
+    phpunit-tests:
+      name: Run PHPUnit Tests
+      needs: set-php-has-changes
+      if: inputs.run-phpunit-tests && needs.set-php-has-changes.outputs.has_php == 'true'
+      runs-on: ubuntu-latest
+      services:
+        mysql:
+          image: mariadb:10.11
+          env:
+            MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
+          ports:
+            - 3306:3306
+          options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      steps:
+        - uses: actions/checkout@v4
+
+        - name: Setup PHP 7.4
+          uses: shivammathur/setup-php@2.37.2
+          with:
+            php-version: '7.4'
+            extensions: mysql, mysqli, pdo_mysql, mbstring, xml, curl
+            coverage: none
+
+        # bin/install-wp-tests.sh uses SVN to download wordpress-tests-lib
+        # (Ubuntu runners no longer include subversion by default)
+        - name: Install Subversion
+          run: |
+            sudo apt-get update -q
+            sudo apt-get install -y subversion
+
+        - name: Make install script executable
+          run: chmod +x bin/install-wp-tests.sh
+        
+          # run the installation script
+        - name: Install WP Test Suite & PHPUnit Dependencies
+          run: composer run test:install
+
+        # Now for the actual meat: run the tests!
+        - name: Run PHPUnit
+          run: |
+            composer run test:ci
     # ==============================================================================
     #  Now lets build the initial artifact, without compiling js 
     # ==============================================================================
