@@ -105,6 +105,21 @@ jobs:
       steps:
         - uses: actions/checkout@v4
 
+        # -------------------------------------------------------------
+        # Boot PHP 85 for the pre-test hook. This is so that any tools (like global tools) can install using modern php.
+        # -------------------------------------------------------------
+        - name: Setup PHP 8.5 for Scoping
+          uses: shivammathur/setup-php@2.37.2
+          with:
+            php-version: '8.5'
+            coverage: none
+
+        - name: Run before tests
+          run: |
+            if composer | grep -q pre-test; then
+              composer run pre-test
+            fi
+        # back to target 74 for the tests runtime
         - name: Setup PHP 7.4
           uses: shivammathur/setup-php@2.37.2
           with:
@@ -125,12 +140,6 @@ jobs:
           # run the installation script
         - name: Install WP Test Suite & PHPUnit Dependencies
           run: composer run test:install
-
-        - name: Run before tests
-          run: |
-            if composer | grep -q pre-test; then
-              composer run pre-test
-            fi
 
         # Now for the actual meat: run the tests!
         - name: Run PHPUnit
