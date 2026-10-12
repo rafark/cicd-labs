@@ -91,6 +91,8 @@ jobs:
     phpunit-tests:
       name: Run PHPUnit Tests
       needs: set-php-has-changes
+      permissions:
+        actions: write   # this so that we may cancel all runs on fail
       if: inputs.run-phpunit-tests && needs.set-php-has-changes.outputs.has_php == 'true'
       runs-on: ubuntu-latest
       services:
@@ -145,6 +147,12 @@ jobs:
         - name: Run PHPUnit
           run: |
             composer run test:ci
+        # oh, no! tests failed! so let's bail from the other jawbs too!
+        - name: Cancel all jobs on failure
+          if: failure()
+          env:
+            GH_TOKEN: ${{ github.token }}
+          run: gh run cancel ${{ github.run_id }} --force || true
     # ==============================================================================
     #  Now lets build the initial artifact, without compiling js 
     # ==============================================================================
@@ -440,3 +448,9 @@ jobs:
 
             echo "=== wp-content/debug.log ==="
             docker exec "$CLI_CONTAINER" cat wp-content/debug.log 2>/dev/null || echo "no debug.log found"
+        # something failed so let's bail
+        - name: Cancel all jobs on failure
+          if: failure()
+          env:
+            GH_TOKEN: ${{ github.token }}
+          run: gh run cancel ${{ github.run_id }} --force || true
