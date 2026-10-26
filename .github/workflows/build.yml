@@ -233,8 +233,8 @@ jobs:
                             ./edp build --target "$RUNNER_TEMP/build" --silent)
             exitCode=$?
 
-            # Trim any accidental whitespace or newlines
-            buildDir=$(echo "$rawOutput" | xargs)
+            # Get the last line which should be the dir. This ignores any prev output for when the build script generated more output than wanted. The last non whitespace line should be the one with the dir
+            buildDir=$(echo "$rawOutput" | grep -E '\w+' | tail -n 1)
 
             if [ $exitCode -ne 0 ] || [ -z "$buildDir" ]; then
               echo "Error: EDP build failed with exit code $exitCode." >&2
