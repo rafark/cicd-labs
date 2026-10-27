@@ -3,6 +3,10 @@ description: "Builds the plugin files using the git tags for versioning and for 
 on: 
   workflow_call:
     inputs:
+      plugin-slug:
+        required: true
+        type: string
+        description: "The WordPress plugin slug used by wp-env for plugin-check and the e2e tests"
       upload-build:
         required: false
         type: boolean
@@ -394,7 +398,7 @@ jobs:
           with:
             repo-token: ${{ github.token }}
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
-            slug: coupons-plus-for-woocommerce
+            slug: ${{ inputs.plugin-slug }}
             ignore-codes: |
               stable_tag_mismatch
 
