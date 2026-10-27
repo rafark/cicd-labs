@@ -18,6 +18,22 @@ on:
         type: boolean
         default: true
         description: "Run the WordPress PHPUnit integration tests. you'll need these composer scripts: test:install and test:ci"
+      php-version-build:
+          required: false
+          type: string
+          default: '8.4' 
+          description: "PHP version used to build the plugin files (edp-build)"
+      php-version-lint:
+        required: false
+        type: string
+        default: '8.4' 
+        description: "PHP version used to lint the built plugin files"
+      php-version-tests-end:
+        required: false
+        type: string
+        default: 'latest' 
+        description: "PHP version used to run the e2e tests, this includes the plugin check tests"
+      
 
 defaults:
   run:
@@ -177,13 +193,6 @@ jobs:
         - name: Add ~/.local/bin to the path PATH, used by some deps bellow
           run: echo "$HOME/.local/bin" >> $GITHUB_PATH
         
-        # --------  install php 8.4 --------
-        - name: Setup PHP Action
-          uses: shivammathur/setup-php@2.37.2
-          with: 
-            php-version: 8.4
-            coverage: none
-        
         # --------  Install versions finder, this is used by: header-injector and the set-versions step. --------
         - name: Install versions-finder
           run: |
@@ -197,6 +206,15 @@ jobs:
           run: |
             echo "wpVersion=$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')" >> $GITHUB_OUTPUT
             echo "pluginVersion=$(versions-finder any --latest --output-strict-semver)" >> $GITHUB_OUTPUT
+
+        # ------------------------------------------------
+        #  Switch to target PHP version for building
+        # ------------------------------------------------
+        - name: Switch PHP for building
+          uses: shivammathur/setup-php@2.37.2
+          with:
+            php-version: ${{ inputs.php-version-build }}
+            coverage: none
 
         # ------------------------------------------------
         #  lets build the js
@@ -249,6 +267,14 @@ jobs:
             folder: ${{ steps.edp-build.outputs.buildDir }}
             branch: build-preview-pr-initial-build-${{ github.event.number }}-${{ github.run_id }}
         # ------------------------------------------------
+        #  Switch to PHP 84 since these tools require that
+        # ------------------------------------------------
+        - name: Switch PHP for the tools
+          uses: shivammathur/setup-php@2.37.2
+          with:
+            php-version: '8.4'
+            coverage: none
+        # ------------------------------------------------
         #  Inject the headers into the build
         # ------------------------------------------------
         - name: Inject headers data
@@ -273,6 +299,7 @@ jobs:
             
             #validate it
             header-injector validate "$phpFile" "$readmeFile" "${{ steps.set-versions.outputs.wpVersion }}" --git-source .
+        
         # ------------------------------------------------
         #  Now for the changelog
         # ------------------------------------------------
@@ -306,6 +333,14 @@ jobs:
           with:
             folder: ${{ steps.edp-build.outputs.buildDir }}
             branch: build-preview-pr-${{ github.event.number }}-${{ github.run_id }}
+        # ------------------------------------------------
+        #  Switch to target PHP version for linting
+        # ------------------------------------------------
+        - name: Switch PHP for linting
+          uses: shivammathur/setup-php@2.37.2
+          with:
+            php-version: ${{ inputs.php-version-lint }}
+            coverage: none
         # --------  We have to lint all files even those we don't own because the wp repo will reject them on svn commit if they have linting errors so yeah better early than later --------
         - name: "Lint PHP files in build dir"
           run: |
@@ -321,13 +356,23 @@ jobs:
             echo "Lint OK."
             echo "::endgroup::"
         # ------------------------------------------------
+        #  Switch to target PHP version for testing
+        # ------------------------------------------------
+        - name: Switch PHP for testing
+          uses: shivammathur/setup-php@2.37.2
+          with:
+            php-version: ${{ inputs.php-version-tests-end }}
+            coverage: none
+        # ------------------------------------------------
         #  Now the plugin check tests
         # ------------------------------------------------
         - name: Create wp-env config overrides
           run: |
+            phpVersion="$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')"
             cat << EOF > .wp-env.override.json
             {
               "core": "https://wordpress.org/wordpress-${{ steps.set-versions.outputs.wpVersion }}.zip",
+              "phpVersion": "$phpVersion",
               "config": {
                 "WP_DEBUG": true,
                 "WP_DEBUG_DISPLAY": false,
