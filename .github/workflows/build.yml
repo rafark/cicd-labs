@@ -42,6 +42,11 @@ on:
         type: string
         default: 'latest' 
         description: "PHP version used to run the e2e tests, this includes the plugin check tests"
+      node-version-build:
+        required: false
+        type: string
+        default: lts/*
+        description: "Node.js version to use when building the plugin JS scripts."
       
 
 defaults:
@@ -232,7 +237,13 @@ jobs:
           with:
             php-version: ${{ inputs.php-version-build }}
             coverage: none
-
+        # ------------------------------------------------
+        #  Use the specified node version for building
+        # ------------------------------------------------
+        - name: Use Node.js for building the scripts
+          uses: actions/setup-node@v4
+          with:
+            node-version: ${{ inputs.node-version-build }}
         # ------------------------------------------------
         #  lets build the js
         # ------------------------------------------------
@@ -241,6 +252,13 @@ jobs:
         
         - name: Build js
           run: composer run build-scripts
+        # ------------------------------------------------
+        #  All right back to node 20.
+        # ------------------------------------------------
+        - name: Use node lts for everything else
+          uses: actions/setup-node@v4
+          with:
+            node-version: lts/*
         # ------------------------------------------------
         #  Install the composer deps before running the builder
         # ------------------------------------------------
