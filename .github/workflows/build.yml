@@ -27,11 +27,16 @@ on:
           type: string
           default: '8.4' 
           description: "PHP version used to build the plugin files (edp-build)"
-      php-version-lint:
+      php-version-lint-build:
         required: false
         type: string
         default: '8.4' 
         description: "PHP version used to lint the built plugin files"
+      php-version-lint-source:
+        required: false
+        type: string
+        default: '8.4' 
+        description: "PHP version used to lint the source plugin files that were changed in this pr."
       php-version-tests-end:
         required: false
         type: string
@@ -96,6 +101,14 @@ jobs:
               with: 
                 files: |
                     **.php
+            # ------------------------------------------------
+            #  Install the php version for source linting
+            # ------------------------------------------------
+            - name: Switch PHP for testing
+              uses: shivammathur/setup-php@2.37.2
+              with:
+                php-version: ${{ inputs.php-version-lint-source }}
+                coverage: none
             # ------------------------------------------------
             #  Run the actual lint checks!
             # ------------------------------------------------
@@ -343,7 +356,7 @@ jobs:
         - name: Switch PHP for linting
           uses: shivammathur/setup-php@2.37.2
           with:
-            php-version: ${{ inputs.php-version-lint }}
+            php-version: ${{ inputs.php-version-lint-build }}
             coverage: none
         # --------  We have to lint all files even those we don't own because the wp repo will reject them on svn commit if they have linting errors so yeah better early than later --------
         - name: "Lint PHP files in build dir"
