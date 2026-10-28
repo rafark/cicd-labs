@@ -3,10 +3,6 @@ description: "Builds the plugin files using the git tags for versioning and for 
 on: 
   workflow_call:
     inputs:
-      plugin-slug:
-        required: true
-        type: string
-        description: "The WordPress plugin slug used by wp-env for plugin-check and the e2e tests"
       upload-build:
         required: false
         type: boolean
@@ -304,6 +300,19 @@ jobs:
             php-version: '8.4'
             coverage: none
         # ------------------------------------------------
+        #  Take the plugin slug from the env.php file.
+        # ------------------------------------------------
+        - name: Setup plugin slug
+          id: setup-slug
+          run: |
+            #setup
+            curl -L https://raw.githubusercontent.com/neblabs/pq/main/bin/install.sh | bash
+            
+            #run
+            slug=$(pq get env.php slug) # assign it here so that should pq fail we exit the script
+
+            echo "slug=$slug" >> "$GITHUB_OUTPUT"
+        # ------------------------------------------------
         #  Inject the headers into the build
         # ------------------------------------------------
         - name: Inject headers data
@@ -423,7 +432,7 @@ jobs:
           with:
             repo-token: ${{ github.token }}
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
-            slug: ${{ inputs.plugin-slug }}
+            slug: ${{ steps.setup-slug.outputs.slug }}
             ignore-codes: |
               stable_tag_mismatch
 
