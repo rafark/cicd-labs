@@ -122,18 +122,24 @@ jobs:
 
           # save it to the global env
           echo "TAG_DIST=$tagDist" >> "$GITHUB_ENV"
-      - name: Setup wp-env config files
+      - name: Setup wp-env config and overrides
         run: |
-          # lets place the e2e wp-env config file to the wp-env json, completely overriding any .wp-env.json. 
-          # if no e2e config file then just add a new empty .wp-env.json to override any other that may affect the actual env
-          # eg: if you had a .wp-env.json with "plugins": ["."] we don't want to install the local repo we want to use the actual one from the 
-          # build not the one from the src code
-          # so in your e2e config file "plugins" key, never add the "." since that will be mounted with the built artifact
-          
+          # 1. Prepare base .wp-env.json
           mv .wp-env.e2e.json .wp-env.json 2>/dev/null || echo "{}" > .wp-env.json
 
-          # lets add the actual build to the mappings. 
-          echo "{\"mappings\": {\"wp-content/plugins/${{ steps.setup-slug.outputs.slug }}\": \"$TAG_DIST\"}}" > .wp-env.override.json
+          cat << EOF > .wp-env.override.json
+          {
+            "mappings": {
+              "wp-content/plugins/${{ steps.setup-slug.outputs.slug }}": "$TAG_DIST"
+            },
+            "config": {
+              "WP_DEBUG": true,
+              "WP_DEBUG_DISPLAY": false,
+              "WP_DEBUG_LOG": true
+            }
+          }
+          EOF
+
       # ------------------------------------------------
       #  Setup wp-env
       # ------------------------------------------------
