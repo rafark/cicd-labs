@@ -45,6 +45,12 @@ jobs:
               php:
                 - '**/*.php'
 
+        # pq requires 84.
+        - name: Setup PHP 8.4 for the tooling
+          uses: shivammathur/setup-php@2.37.2
+          with:
+            php-version: '8.4'
+            coverage: none
         - name: Setup slug and config from env.php
           id: setup-config
           run: |
