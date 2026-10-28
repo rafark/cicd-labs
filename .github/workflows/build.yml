@@ -8,42 +8,6 @@ on:
         type: boolean
         default: false
         description: Uploads build as artifact only when all steps ran successfully
-      run-playwright-tests:
-        required: false
-        type: boolean
-        default: true
-        description: Run the playwright e2e smoke tests (light)
-      run-phpunit-tests:
-        required: false
-        type: boolean
-        default: true
-        description: "Run the WordPress PHPUnit integration tests. you'll need these composer scripts: test:install and test:ci"
-      php-version-build:
-          required: false
-          type: string
-          default: '8.4' 
-          description: "PHP version used to build the plugin files (edp-build)"
-      php-version-lint-build:
-        required: false
-        type: string
-        default: '8.4' 
-        description: "PHP version used to lint the built plugin files"
-      php-version-lint-source:
-        required: false
-        type: string
-        default: '8.4' 
-        description: "PHP version used to lint the source plugin files that were changed in this pr."
-      php-version-tests-end:
-        required: false
-        type: string
-        default: 'latest' 
-        description: "PHP version used to run the e2e tests, this includes the plugin check tests"
-      node-version-build:
-        required: false
-        type: string
-        default: lts/*
-        description: "Node.js version to use when building the plugin JS scripts."
-      
 
 defaults:
   run:
@@ -55,45 +19,85 @@ concurrency:
 
 jobs:
     # ==============================================================================
-    #  Set if we have changed PHP files
+    #  1. Setup & Config: Check changes AND resolve env.php env/config values
     # ==============================================================================
-    set-php-has-changes:
-      name: Check for PHP file changes
+    setup:
+      name: Prepare CI and resolve config
       runs-on: ubuntu-latest
       outputs:
         has_php: ${{ steps.php-changes.outputs.php }}
+        slug: ${{ steps.setup-config.outputs.slug }}
+        php_version_build: ${{ steps.setup-config.outputs.php_version_build }}
+        php_version_lint_source: ${{ steps.setup-config.outputs.php_version_lint_source }}
+        php_version_lint_build: ${{ steps.setup-config.outputs.php_version_lint_build }}
+        php_version_tests_e2e: ${{ steps.setup-config.outputs.php_version_tests_e2e }}
+        php_version_tests_php: ${{ steps.setup-config.outputs.php_version_tests_php }}
+        node_version_build: ${{ steps.setup-config.outputs.node_version_build }}
+        tests_playwright: ${{ steps.setup-config.outputs.tests_playwright }}
+        tests_php: ${{ steps.setup-config.outputs.tests_php }}
       steps:
         - uses: actions/checkout@v4
+
         - uses: dorny/paths-filter@v3
           id: php-changes
           with:
             filters: |
               php:
                 - '**/*.php'
+
+        - name: Setup slug and config from env.php
+          id: setup-config
+          run: |
+            curl -L https://raw.githubusercontent.com/neblabs/pq/main/bin/install.sh | bash
+
+            # ---- slug ----  
+            # Do not add a fail guard. 
+            # Fetching needs to be done here so should pq fail we stop the script. pq returns non-zero on invalid value or error. Since the slug is required. We need to make it fail here to halt and see what happened.
+            slug=$(pq get env.php slug)
+            
+            
+            # ---- versions ---- 
+
+            # php
+            php_version_build=$(pq get env.php runtimes.php.build || true)
+            php_version_lint_source=$(pq get env.php runtimes.php.lint_source || true)
+            php_version_lint_build=$(pq get env.php runtimes.php.lint_build || true)
+            php_version_tests_e2e=$(pq get env.php runtimes.php.tests_e2e || true)
+            php_version_tests_php=$(pq get env.php runtimes.php.tests_php || true)
+            
+            # node
+            node_version_build=$(pq get env.php runtimes.node.build || true)
+            
+            
+            # ---- tests ---- 
+            tests_playwright=$(pq get env.php tests.playwright || true)
+            tests_php=$(pq get env.php tests.php|| true)
+
+            
+            # === COMMIT === 
+
+            echo "slug=$slug" >> "$GITHUB_OUTPUT"
+            echo "php_version_build=${php_version_build:-8.4}" >> "$GITHUB_OUTPUT"
+            echo "php_version_lint_source=${php_version_lint_source:-8.4}" >> "$GITHUB_OUTPUT"
+            echo "php_version_lint_build=${php_version_lint_build:-8.4}" >> "$GITHUB_OUTPUT"
+            echo "php_version_tests_e2e=${php_version_tests_e2e:-latest}" >> "$GITHUB_OUTPUT"
+            echo "php_version_tests_php=${php_version_tests_php:-latest}" >> "$GITHUB_OUTPUT"
+            echo "node_version_build=${node_version_build:-lts/*}" >> "$GITHUB_OUTPUT"
+            echo "tests_playwright=${tests_playwright:-true}" >> "$GITHUB_OUTPUT"
+            echo "tests_php=${tests_php:-true}" >> "$GITHUB_OUTPUT"
     # ==============================================================================
     #  Then only check for syntax errors on changed PHP files
     # ==============================================================================    
     check-php-changed-files:
         name: Ensure changed PHP files are valid across all supported PHP versions.
-        needs: set-php-has-changes
-        if: needs.set-php-has-changes.outputs.has_php == 'true'
+        needs: setup
+        if: needs.setup.outputs.has_php == 'true'
         runs-on: ubuntu-latest
-        strategy:
-            fail-fast: true
-            matrix:
-                # php-version: [7.4, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5] 
-                php-version: [7.4, 8.5] # to save us some compute and time we'll only run against these versions. They run in parallel but still they can take more wall-clock time  regardless.
         steps:
             # ------------------------------------------------
             #  setup...
             # ------------------------------------------------
             - uses: actions/checkout@v6
-
-            - name: Setup PHP Action
-              uses: shivammathur/setup-php@2.37.2
-              with: 
-                php-version: ${{ matrix.php-version }}
-                coverage: none
 
             # --------  set changed files --------
             - name: Set changed PHP files
@@ -105,10 +109,10 @@ jobs:
             # ------------------------------------------------
             #  Install the php version for source linting
             # ------------------------------------------------
-            - name: Switch PHP for testing
+            - name: Switch PHP for linting the source files
               uses: shivammathur/setup-php@2.37.2
               with:
-                php-version: ${{ inputs.php-version-lint-source }}
+                php-version: ${{ needs.setup.outputs.php_version_lint_source }}
                 coverage: none
             # ------------------------------------------------
             #  Run the actual lint checks!
@@ -124,11 +128,11 @@ jobs:
     # ==============================================================================
     phpunit-tests:
       name: Run PHPUnit Tests
-      needs: set-php-has-changes
+      needs: setup # do not check fo php file changes because what if we changed the phpunit.xml config or some other env var. better to be sure and phpunit tests are cheap anyway
       permissions:
         contents: read # so that we can checkout
         actions: write   # this so that we may cancel all runs on fail
-      if: inputs.run-phpunit-tests && needs.set-php-has-changes.outputs.has_php == 'true'
+      if: needs.setup.outputs.tests_php == 'true' && needs.setup.outputs.has_php == 'true'
       runs-on: ubuntu-latest
       services:
         mysql:
@@ -156,11 +160,11 @@ jobs:
             if composer | grep -q pre-test; then
               composer run pre-test
             fi
-        # back to target 74 for the tests runtime
-        - name: Setup PHP 7.4
+        # back to target for the tests runtime
+        - name: Setup PHP tests target
           uses: shivammathur/setup-php@2.37.2
           with:
-            php-version: '7.4'
+            php-version: ${{ needs.setup.outputs.php_version_tests_php }}
             extensions: mysql, mysqli, pdo_mysql, mbstring, xml, curl
             coverage: none
 
@@ -191,7 +195,7 @@ jobs:
       permissions:
         contents: write  # for github-pages-deploy-action
         actions: write
-      needs: check-php-changed-files
+      needs: [setup, check-php-changed-files]
       if: always() && (needs.check-php-changed-files.result == 'success' || needs.check-php-changed-files.result == 'skipped')
       steps:
         # ==============================================================================
@@ -218,14 +222,13 @@ jobs:
           run: |
             echo "wpVersion=$(curl -s https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version')" >> $GITHUB_OUTPUT
             echo "pluginVersion=$(versions-finder any --latest --output-strict-semver)" >> $GITHUB_OUTPUT
-
         # ------------------------------------------------
         #  Switch to target PHP version for building
         # ------------------------------------------------
         - name: Switch PHP for building
           uses: shivammathur/setup-php@2.37.2
           with:
-            php-version: ${{ inputs.php-version-build }}
+            php-version: ${{ needs.setup.outputs.php_version_build }}
             coverage: none
         # ------------------------------------------------
         #  Use the specified node version for building
@@ -233,7 +236,7 @@ jobs:
         - name: Use Node.js for building the scripts
           uses: actions/setup-node@v4
           with:
-            node-version: ${{ inputs.node-version-build }}
+            node-version: ${{ needs.setup.outputs.node_version_build }}
         # ------------------------------------------------
         #  lets build the js
         # ------------------------------------------------
@@ -300,19 +303,6 @@ jobs:
             php-version: '8.4'
             coverage: none
         # ------------------------------------------------
-        #  Take the plugin slug from the env.php file.
-        # ------------------------------------------------
-        - name: Setup plugin slug
-          id: setup-slug
-          run: |
-            #setup
-            curl -L https://raw.githubusercontent.com/neblabs/pq/main/bin/install.sh | bash
-            
-            #run
-            slug=$(pq get env.php slug) # assign it here so that should pq fail we exit the script
-
-            echo "slug=$slug" >> "$GITHUB_OUTPUT"
-        # ------------------------------------------------
         #  Inject the headers into the build
         # ------------------------------------------------
         - name: Inject headers data
@@ -377,7 +367,7 @@ jobs:
         - name: Switch PHP for linting
           uses: shivammathur/setup-php@2.37.2
           with:
-            php-version: ${{ inputs.php-version-lint-build }}
+            php-version: ${{ needs.setup.outputs.php_version_lint_build }}
             coverage: none
         # --------  We have to lint all files even those we don't own because the wp repo will reject them on svn commit if they have linting errors so yeah better early than later --------
         - name: "Lint PHP files in build dir"
@@ -399,7 +389,7 @@ jobs:
         - name: Switch PHP for testing
           uses: shivammathur/setup-php@2.37.2
           with:
-            php-version: ${{ inputs.php-version-tests-end }}
+            php-version: ${{ needs.setup.outputs.php_version_tests_e2e }}
             coverage: none
         # ------------------------------------------------
         #  Now the plugin check tests
@@ -432,7 +422,7 @@ jobs:
           with:
             repo-token: ${{ github.token }}
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
-            slug: ${{ steps.setup-slug.outputs.slug }}
+            slug: ${{ needs.setup.outputs.slug }}
             ignore-codes: |
               stable_tag_mismatch
 
@@ -483,9 +473,11 @@ jobs:
           run: npm ci --no-audit
 
         - name: Install Playwright Browsers
+          if: needs.setup.outputs.tests_playwright == 'true'
           run: npx playwright install chrome
 
         - name: Run Playwright tests
+          if: needs.setup.outputs.tests_playwright == 'true'
           # at the github-level, might increase when tests grow...
           timeout-minutes: 5
           run: npx playwright test e2e/smoke --reporter=github

@@ -13,8 +13,15 @@
 
 # env.php
 
-This tool uses `header-injector` so an env.php file is expected on the *repo*
+A file that returns an array with the following fields:
+
+| field | desc | example |
+|  ---  |  --- | --- |
+| slug  | the final official slug of the plugin, used for plugin-check and for deploying to .org | coupons-plus-for-woocommerce |
+| pluginFile | main plugin file | index.php | 
+| *other fields* | for the rest of the **required** and *optional* fields, please look at [header-injector](https://github.com/neblabs/header-injector#configuration-envphp) | n/a | 
 
 # playwright.config.js*
 
 If you choose to run playwright tests
+
