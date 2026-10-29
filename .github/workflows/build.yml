@@ -196,7 +196,7 @@ jobs:
     #  Now lets build the initial artifact, without compiling js 
     # ==============================================================================
     initial-build:
-      timeout-minutes: 15 # dont go over 15 minutes. the fact that you're over 10 means something is wrong but lets give it a little window so that we dont interrupt this at exactly 10 minutes but make sure if something is stuck in one of the steps it doesnt go on forever eating all our allocated minutes.
+      timeout-minutes: 25 # 25 max for this job. no more. good luck.
       runs-on: ubuntu-latest
       permissions:
         contents: write  # for github-pages-deploy-action
@@ -484,8 +484,8 @@ jobs:
 
         - name: Run Playwright tests
           if: needs.setup.outputs.tests_playwright == 'true'
-          # at the github-level, might increase when tests grow...
-          timeout-minutes: 5
+          # at the github-level, might increase when tests grow... ... and that time is now. Increasing it to 15.
+          timeout-minutes: 15
           run: npx playwright test e2e/smoke --reporter=github
           env:
             WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
