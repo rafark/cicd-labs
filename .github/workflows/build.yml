@@ -188,10 +188,22 @@ jobs:
         - name: Install WP Test Suite & PHPUnit Dependencies
           run: composer run test:install
 
+        # just before running the tests, after all the env is settled!
+        - name: Right before running PHPUnit
+          run: |
+            if composer | grep -q test:ci:before; then
+              composer run test:ci:before
+            fi
         # Now for the actual meat: run the tests!
         - name: Run PHPUnit
           run: |
             composer run test:ci
+        # and right after
+        - name: Right after running PHPUnit
+          run: |
+            if composer | grep -q test:ci:after; then
+              composer run test:ci:after
+            fi
     # ==============================================================================
     #  Now lets build the initial artifact, without compiling js 
     # ==============================================================================
