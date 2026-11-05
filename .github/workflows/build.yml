@@ -268,10 +268,16 @@ jobs:
         #  lets build the js
         # ------------------------------------------------
         - name: Install js deps
-          run: composer run install-scripts-ci
+          run: |
+            if composer | grep -q install-scripts-ci; then
+              composer run install-scripts-ci
+            fi
         
         - name: Build js
-          run: composer run build-scripts
+          run: |
+            if composer | grep -q build-scripts; then
+              composer run build-scripts
+            fi
         # ------------------------------------------------
         #  All right back to node 20.
         # ------------------------------------------------
