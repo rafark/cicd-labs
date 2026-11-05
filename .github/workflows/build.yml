@@ -136,7 +136,7 @@ jobs:
       name: Run PHPUnit Tests
       needs: setup # do not check fo php file changes because what if we changed the phpunit.xml config or some other env var. better to be sure and phpunit tests are cheap anyway
       permissions:
-        contents: read # so that we can checkout
+        contents: write # so that we can deploy the preview branches
         actions: write   # this so that we may cancel all runs on fail
       if: needs.setup.outputs.tests_php == 'true' && needs.setup.outputs.has_php == 'true'
       runs-on: ubuntu-latest
