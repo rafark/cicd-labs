@@ -303,21 +303,20 @@ jobs:
         - name: Run the edp builder
           id: edp-build
           run: |
-            chmod u+x ./edp
-            [[ -f edp-shell ]] && chmod u+x ./edp-shell
-
-            # Route PHP errors to stderr and capture raw stdout
-            rawOutput=$(php -d display_errors=stderr \
-                            -d error_reporting="E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED & ~E_WARNING & ~E_NOTICE" \
-                            ./edp build --target "$RUNNER_TEMP/build" --silent)
+            rawOutput=$(composer run edp)
             exitCode=$?
 
-            # Get the last line which should be the dir. This ignores any prev output for when the build script generated more output than wanted. The last non whitespace line should be the one with the dir
+            # Get the last line which should be the dir. This ignores any prev output for when the build script generated more output than wanted (eg warnings or multi-line stdout from the command). The last non whitespace line should be the one with the dir
             buildDir=$(echo "$rawOutput" | grep -E '\w+' | tail -n 1)
 
             if [ $exitCode -ne 0 ] || [ -z "$buildDir" ]; then
               echo "Error: EDP build failed with exit code $exitCode." >&2
               echo "Output captured in stdout was: $rawOutput" >&2
+              exit 1
+            fi
+
+            if ! [ -d "$buildDir"]; then 
+              echo "$buildDir" is not a dir 1>&2
               exit 1
             fi
 
