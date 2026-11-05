@@ -315,7 +315,7 @@ jobs:
               exit 1
             fi
 
-            if ! [ -d "$buildDir"]; then 
+            if ! [ -d "$buildDir" ]; then 
               echo "$buildDir" is not a dir 1>&2
               exit 1
             fi
