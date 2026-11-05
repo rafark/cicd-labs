@@ -35,6 +35,7 @@ jobs:
         node_version_build: ${{ steps.setup-config.outputs.node_version_build }}
         tests_playwright: ${{ steps.setup-config.outputs.tests_playwright }}
         tests_php: ${{ steps.setup-config.outputs.tests_php }}
+        tests_plugin_check: ${{ steps.setup-config.outputs.tests_plugin_check }}
       steps:
         - uses: actions/checkout@v4
 
@@ -77,7 +78,8 @@ jobs:
             
             # ---- tests ---- 
             tests_playwright=$(pq get env.php tests.playwright || true)
-            tests_php=$(pq get env.php tests.php|| true)
+            tests_php=$(pq get env.php tests.php || true)
+            tests_plugin_check=$(pq get env.php tests.plugin-check || true)
 
             
             # === COMMIT === 
@@ -91,6 +93,7 @@ jobs:
             echo "node_version_build=${node_version_build:-lts/*}" >> "$GITHUB_OUTPUT"
             echo "tests_playwright=${tests_playwright:-true}" >> "$GITHUB_OUTPUT"
             echo "tests_php=${tests_php:-true}" >> "$GITHUB_OUTPUT"
+            echo "tests_plugin_check=${tests_plugin_check:-true}" >> "$GITHUB_OUTPUT"
     # ==============================================================================
     #  Then only check for syntax errors on changed PHP files
     # ==============================================================================    
@@ -455,6 +458,9 @@ jobs:
             repo-token: ${{ github.token }}
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
             slug: ${{ needs.setup.outputs.slug }}
+            ignore-errors: ${{ needs.setup.outputs.tests_plugin_check == 'false' && 'true' || 'false' }}
+            ignore-warnings: ${{ needs.setup.outputs.tests_plugin_check == 'false' && 'true' || 'false' }}
+            checks: ${{ needs.setup.outputs.tests_plugin_check == 'false' && 'file_type' || '' }}
             ignore-codes: |
               stable_tag_mismatch
 
