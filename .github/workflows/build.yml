@@ -522,6 +522,7 @@ jobs:
           env:
             WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
             PLUGIN_VERSION: ${{ steps.set-versions.outputs.pluginVersion }}
+            PLUGIN_SLUG: ${{ needs.setup.outputs.slug }} # the plugin-check action overrides this to use the buildDir. we need to set it explicitly here.
             DEBUG: pw:api
 
         # ------------------------------------------------
