@@ -140,6 +140,8 @@ jobs:
         actions: write   # this so that we may cancel all runs on fail
       if: needs.setup.outputs.tests_php == 'true' && needs.setup.outputs.has_php == 'true'
       runs-on: ubuntu-latest
+      env:
+        ORG_REPO_TOKEN: ${{ secrets.ORG_REPO_TOKEN }}
       services:
         mysql:
           image: mariadb:10.11
