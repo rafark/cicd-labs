@@ -190,6 +190,13 @@ jobs:
         - name: Install WP Test Suite & PHPUnit Dependencies
           run: composer run test:install
 
+        - name: Deploy before phpunit tests dir for preview
+          uses: JamesIves/github-pages-deploy-action@v4
+          if: env.BEFORE_TESTS_PREVIEW_DIR != ''
+          with:
+            folder: ${{ env.BEFORE_TESTS_PREVIEW_DIR }}
+            branch: build-preview-pr-before-phpunit-${{ github.event.number }}-${{ github.run_id }}
+
         # just before running the tests, after all the env is settled!
         - name: Right before running PHPUnit
           run: |
