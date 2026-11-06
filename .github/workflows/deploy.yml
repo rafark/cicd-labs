@@ -1,4 +1,4 @@
-name: "Deploy tag to WordPress Repo"
+name: "Publish GitHub Release & Deploy tag to WordPress Repo"
 
 on: 
   workflow_call:
@@ -28,6 +28,63 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       upload-build: true
+  deploy-github-release:
+    name: Create GitHub Release
+    needs: build-from-tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Normalize version
+        id: normalized-version
+        run: |
+          passedVersion="${{ inputs.version }}"
+          echo "version=${passedVersion#[vV]}" >> "$GITHUB_OUTPUT"
+
+      - name: Download plugin build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-build
+          path: plugin-build
+
+      # --------  install php needed for the pq bellow... --------
+      - name: Setup PHP Action
+        uses: shivammathur/setup-php@2.37.2
+        with: 
+          php-version: 8.4
+          coverage: none
+      # --------  add the local bin to path --------
+      - name: Add ~/.local/bin to the path PATH, used by some deps bellow
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+        
+      - name: Install pq
+        id: install-pq
+        run: |
+          #setup
+          curl -L https://raw.githubusercontent.com/neblabs/pq/main/bin/install.sh | bash
+      # --------  Setup the plugin slug --------
+      - name: Package plugin zip
+        run: |
+          VERSION="${{ inputs.version }}" # the full version!
+          slug=$(pq get env.php slug) # assign it here so that should pq fail we exit the script
+          [ -z "$slug" ] && slug="${{ github.event.repository.name }}"
+
+          mkdir -p "dist/${slug}"
+          cp -r plugin-build/. "dist/${slug}/"
+          (cd dist && zip -r "../${slug}-${VERSION}.zip" "${slug}")
+
+      - name: Release with action-gh-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: v${{ steps.normalized-version.outputs.version }}
+          files: "*.zip"
+          generate_release_notes: true
+          # Marks as prerelease if version contains a hyphen (e.g. 1.12.0-beta-1)
+          prerelease: ${{ contains(inputs.version, '-') }}
   deploy-build-tag:
     needs: build-from-tag
     name: Deploy the build to the svn plugins repo as a new tag
