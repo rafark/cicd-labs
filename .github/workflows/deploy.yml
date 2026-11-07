@@ -260,7 +260,7 @@ jobs:
       - name: Run Playwright tests
         # at the github-level, might increase when tests grow...
         timeout-minutes: 5
-        run: npx playwright test --reporter=github
+        run: npx playwright test e2e --reporter=list,github --retries=2
         env:
           WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
           PLUGIN_VERSION: ${{ steps.normalized-version.outputs.version }}
