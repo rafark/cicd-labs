@@ -235,6 +235,15 @@ jobs:
           with:
             fetch-depth: 0
 
+        # ==============================================================================
+        #  Make subversion available for the composer scripts that may need it, since it is expected to be used since this is a workflow for wp plugins.
+        #  DO NOT REMOVE because there is one plugin of ours that relies on it. It's not a nice to have but a must have even though it is not svn might not be explicitly used in this file.
+        # ==============================================================================
+        - name: Install Subversion
+          run: |
+            sudo apt-get update -q
+            sudo apt-get install -y subversion
+
         # --------  add the local bin to path --------
         - name: Add ~/.local/bin to the path PATH, used by some deps bellow
           run: echo "$HOME/.local/bin" >> $GITHUB_PATH
