@@ -432,10 +432,21 @@ jobs:
         - name: Create wp-env config overrides
           run: |
             phpVersion="$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')"
+
+            plugins_json="[]"
+            if composer | grep -q wp-env-plugin-check-json-deps; then
+              echo "running composer: wp-env-plugin-check-json-deps"
+
+              plugins_json=$(composer run --no-ansi wp-env-plugin-check-json-deps 2>/dev/null \
+                | sed -e 's/\r//g' -e '/^[[:space:]]*$/d' \
+                | jq -R . | jq -s -c .)
+            fi
+
             cat << EOF > .wp-env.override.json
             {
               "core": "https://wordpress.org/wordpress-${{ steps.set-versions.outputs.wpVersion }}.zip",
               "phpVersion": "$phpVersion",
+              "plugins": ${plugins_json:-[]},
               "config": {
                 "WP_DEBUG": true,
                 "WP_DEBUG_DISPLAY": false,
@@ -443,6 +454,10 @@ jobs:
               }
             }
             EOF
+
+            echo "::group::Generated .wp-env.override.json"
+            cat .wp-env.override.json
+            echo "::endgroup::"
 
         - name: Cache wp-env assets by WP version
           uses: actions/cache@v4
