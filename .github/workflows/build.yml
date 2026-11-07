@@ -227,6 +227,8 @@ jobs:
         actions: write
       needs: [setup, check-php-changed-files]
       if: always() && (needs.check-php-changed-files.result == 'success' || needs.check-php-changed-files.result == 'skipped')
+      env:
+        ORG_REPO_TOKEN: ${{ secrets.ORG_REPO_TOKEN }}
       steps:
         # ==============================================================================
         #  Setup the env...
