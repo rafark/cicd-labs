@@ -544,7 +544,7 @@ jobs:
           if: needs.setup.outputs.tests_playwright == 'true'
           # at the github-level, might increase when tests grow... ... and that time is now. Increasing it to 15.
           timeout-minutes: 15
-          run: npx playwright test e2e --reporter=list,github --retries=2
+          run: npx playwright test e2e --reporter=list,github --retries=1
           env:
             WP_BASE_URL: ${{ steps.wp-env-network.outputs.WP_BASE_URL }}
             PLUGIN_VERSION: ${{ steps.set-versions.outputs.pluginVersion }}
