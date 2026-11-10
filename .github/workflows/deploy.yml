@@ -28,6 +28,7 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       upload-build: true
+    secrets: inherit
   setup:
       name: Prepare CI and resolve config
       needs: [build-from-tag]
