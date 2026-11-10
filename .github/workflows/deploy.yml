@@ -30,6 +30,7 @@ jobs:
       upload-build: true
   setup:
       name: Prepare CI and resolve config
+      needs: [build-from-tag]
       runs-on: ubuntu-latest
       outputs:
         slug: ${{ steps.setup-config.outputs.slug }}
