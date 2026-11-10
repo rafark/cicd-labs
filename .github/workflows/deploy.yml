@@ -94,21 +94,32 @@ jobs:
       # --------  Setup the plugin slug --------
       - name: Package plugin zip
         run: |
-          slug=${{ needs.setup.outputs.slug }}
-          VERSION="${{ inputs.version }}"
-          [ -z "$slug" ] && slug="${{ github.event.repository.name }}"
+          mkdir -p dist
+          mkdir -p ".staging/${SLUG}"
 
-          mkdir -p "dist/${slug}"
-          cp -r plugin-build/. "dist/${slug}/"
-          (cd dist && zip -r "../${slug}-${VERSION}.zip" "${slug}")
+          cp -r plugin-build/. ".staging/${SLUG}/"
 
+          (cd .staging && zip -r "../dist/${SLUG}-${VERSION}.zip" "${SLUG}")
+          rm -rf .staging
+
+          # dump whatever to dist/
+          if composer | grep -q before-gh-release; then
+            composer run before-gh-release
+          fi
+        env:
+          REPO_DIR: ${{ github.workspace }}
+          BUILD_DIR: ${{ github.workspace }}/plugin-build
+          DIST_DIR: ${{ github.workspace }}/dist
+          VERSION: ${{ inputs.version }}
+          SLUG: ${{ needs.setup.outputs.slug || github.event.repository.name }}      
+      
       - name: Release with action-gh-release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version }}
           name: v${{ steps.normalized-version.outputs.version }}
-          files: "*.zip"
-          generate_release_notes: true
+          files: "dist/*"
+          generate_release_notes: false
           # Marks as prerelease if version contains a hyphen (e.g. 1.12.0-beta-1)
           prerelease: ${{ contains(inputs.version, '-') }}
   deploy-build-tag:
