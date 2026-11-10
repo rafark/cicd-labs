@@ -28,10 +28,51 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       upload-build: true
+  setup:
+      name: Prepare CI and resolve config
+      runs-on: ubuntu-latest
+      outputs:
+        slug: ${{ steps.setup-config.outputs.slug }}
+        deploy_gh_releases: ${{ steps.setup-config.outputs.deploy_gh_releases }}
+        deploy_wp_repo: ${{ steps.setup-config.outputs.deploy_wp_repo }}
+      steps:
+        - uses: actions/checkout@v4
+        # pq requires 84.
+        - name: Setup PHP 8.4 for the tooling
+          uses: shivammathur/setup-php@2.37.2
+          with:
+            php-version: '8.4'
+            coverage: none
+        # --------  add the local bin to path --------
+        - name: Add ~/.local/bin to the path PATH, used by some deps bellow
+          run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+        - name: Setup slug and config from env.php
+          id: setup-config
+          run: |
+            curl -L https://raw.githubusercontent.com/neblabs/pq/main/bin/install.sh | bash
+
+            # ---- slug ----  
+            # Do not add a fail guard. 
+            # Fetching needs to be done here so should pq fail we stop the script. pq returns non-zero on invalid value or error. Since the slug is required. We need to make it fail here to halt and see what happened.
+            slug=$(pq get env.php slug)
+            
+            
+            # ---- tests ---- 
+            deploy_gh_releases=$(pq get env.php deploy.github-releases || true)
+            deploy_wp_repo=$(pq get env.php deploy.wordpress-repo || true)
+
+            
+            # === COMMIT === 
+
+            echo "slug=$slug" >> "$GITHUB_OUTPUT"
+            echo "deploy_gh_releases=${deploy_gh_releases:-true}" >> "$GITHUB_OUTPUT"
+            echo "deploy_wp_repo=${deploy_wp_repo:-false}" >> "$GITHUB_OUTPUT"
+    
   deploy-github-release:
     name: Create GitHub Release
-    needs: build-from-tag
+    needs: [build-from-tag, setup]
     runs-on: ubuntu-latest
+    if: needs.setup.outputs.deploy_gh_releases == 'true'
     permissions:
       contents: write
     steps:
@@ -50,26 +91,11 @@ jobs:
           name: plugin-build
           path: plugin-build
 
-      # --------  install php needed for the pq bellow... --------
-      - name: Setup PHP Action
-        uses: shivammathur/setup-php@2.37.2
-        with: 
-          php-version: 8.4
-          coverage: none
-      # --------  add the local bin to path --------
-      - name: Add ~/.local/bin to the path PATH, used by some deps bellow
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-        
-      - name: Install pq
-        id: install-pq
-        run: |
-          #setup
-          curl -L https://raw.githubusercontent.com/neblabs/pq/main/bin/install.sh | bash
       # --------  Setup the plugin slug --------
       - name: Package plugin zip
         run: |
-          VERSION="${{ inputs.version }}" # the full version!
-          slug=$(pq get env.php slug) # assign it here so that should pq fail we exit the script
+          slug=${{ needs.setup.outputs.slug }}
+          VERSION="${{ inputs.version }}"
           [ -z "$slug" ] && slug="${{ github.event.repository.name }}"
 
           mkdir -p "dist/${slug}"
@@ -86,9 +112,10 @@ jobs:
           # Marks as prerelease if version contains a hyphen (e.g. 1.12.0-beta-1)
           prerelease: ${{ contains(inputs.version, '-') }}
   deploy-build-tag:
-    needs: build-from-tag
     name: Deploy the build to the svn plugins repo as a new tag
+    needs: [build-from-tag, setup]
     runs-on: ubuntu-latest
+    if: needs.setup.outputs.deploy_wp_repo == 'true'
     steps:
       # --------  Checking out even though we are not using git tags or the plugin source code, we need the source for: the env.php and for the e2e tests which are only found on the git repo so --------
       - name: Checkout
@@ -126,26 +153,6 @@ jobs:
           echo "Artifact has contents!"
 
           ls -la ./plugin-build
-      # --------  add the local bin to path --------
-      - name: Add ~/.local/bin to the path PATH, used by some deps bellow
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      # --------  install php needed for the pq bellow... --------
-      - name: Setup PHP Action
-        uses: shivammathur/setup-php@2.37.2
-        with: 
-          php-version: 8.4
-          coverage: none
-      # --------  Setup the plugin slug --------
-      - name: Setup plugin slug
-        id: setup-slug
-        run: |
-          #setup
-          curl -L https://raw.githubusercontent.com/neblabs/pq/main/bin/install.sh | bash
-          
-          #run
-          slug=$(pq get env.php slug) # assign it here so that should pq fail we exit the script
-
-          echo "slug=$slug" >> "$GITHUB_OUTPUT"
       # ------------------------------------------------
       #  Install svn
       # ------------------------------------------------
@@ -166,7 +173,7 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::running wp-svn-deploy...."
-          wp-svn-deploy -slug ${{ steps.setup-slug.outputs.slug }} -build ./plugin-build -version ${{ steps.normalized-version.outputs.version }}
+          wp-svn-deploy -slug ${{ needs.setup.outputs.slug }} -build ./plugin-build -version ${{ steps.normalized-version.outputs.version }}
           echo "::endgroup::"      
       # ------------------------------------------------
       #  let's download the newly deployed tag which is the one that we'll be testing against
@@ -175,7 +182,7 @@ jobs:
         run: |
           tagDist=$(mktemp -d)/tag-dist
 
-          svn export https://plugins.svn.wordpress.org/${{ steps.setup-slug.outputs.slug }}/tags/${{ steps.normalized-version.outputs.version }} "$tagDist"
+          svn export https://plugins.svn.wordpress.org/${{ needs.setup.outputs.slug }}/tags/${{ steps.normalized-version.outputs.version }} "$tagDist"
 
           # save it to the global env
           echo "TAG_DIST=$tagDist" >> "$GITHUB_ENV"
@@ -187,7 +194,7 @@ jobs:
           cat << EOF > .wp-env.override.json
           {
             "mappings": {
-              "wp-content/plugins/${{ steps.setup-slug.outputs.slug }}": "$TAG_DIST"
+              "wp-content/plugins/${{ needs.setup.outputs.slug }}": "$TAG_DIST"
             },
             "config": {
               "WP_DEBUG": true,
@@ -208,7 +215,7 @@ jobs:
           wp-env start
 
           # since the plugin was mounted. we need to enable it. this is by design because if the plugin has other plugin dependencies, it will no be able to be installed by wp-cli.
-          wp-env run cli wp plugin activate ${{ steps.setup-slug.outputs.slug }}
+          wp-env run cli wp plugin activate ${{ needs.setup.outputs.slug }}
       # ------------------------------------------------
       #  All right so up and running lets now just run the tests and call it a day
       # ------------------------------------------------
@@ -274,7 +281,7 @@ jobs:
             SVN_PASS: ${{ secrets.SVN_PASS }}
         run: |
           version="${{ steps.normalized-version.outputs.version }}"
-          pluginSlug="${{ steps.setup-slug.outputs.slug }}"
+          pluginSlug="${{ needs.setup.outputs.slug }}"
           
           svnmucc \
             --username "$SVN_USER" --password "$SVN_PASS" \
