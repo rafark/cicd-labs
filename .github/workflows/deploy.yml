@@ -10,9 +10,9 @@ on:
         description: The version to use to create the tag in the remote wp plugins repo
     secrets:
       SVN_USER: 
-        required: true
+        required: false
       SVN_PASS: 
-        required: true
+        required: false
 
 
 defaults:
