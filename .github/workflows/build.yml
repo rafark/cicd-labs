@@ -480,6 +480,8 @@ jobs:
 
         - name: Run plugin check
           uses: wordpress/plugin-check-action@v1
+          env:
+            WP_ENV_PHP_VERSION: '8.5' # tmp 85 to see if the new 86 fails
           with:
             repo-token: ${{ github.token }}
             build-dir: ${{ steps.edp-build.outputs.buildDir }}
